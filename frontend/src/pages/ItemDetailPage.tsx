@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import type { CollectionItem, CustomField, SearchResult, SearchResponse } from "@/lib/types";
+import type { CollectionItem, SearchResult, SearchResponse } from "@/lib/types";
 
 function getSearchEndpoint(mediaType: string): string {
   switch (mediaType) {
@@ -89,9 +89,6 @@ export function ItemDetailPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
 
-  // Custom fields (admin-defined)
-  const [customFields, setCustomFields] = useState<CustomField[]>([]);
-
   // All metadata values (editable)
   const [metaValues, setMetaValues] = useState<Record<string, string>>({});
 
@@ -101,12 +98,6 @@ export function ItemDetailPage() {
 
   // Dynamic page title
   usePageTitle(item ? item.title : undefined);
-
-  useEffect(() => {
-    apiFetch<CustomField[]>("/custom-fields/")
-      .then(setCustomFields)
-      .catch(() => {});
-  }, []);
 
   const syncFromItem = useCallback((data: CollectionItem) => {
     setItem(data);

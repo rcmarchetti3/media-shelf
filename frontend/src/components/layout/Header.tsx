@@ -96,8 +96,7 @@ export function Header() {
     <header className="flex h-14 items-center justify-between border-b border-border px-4 md:px-6">
       <div className="md:hidden">
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
+          <SheetTrigger render={<Button variant="ghost" size="icon" />}>
               <svg
                 className="h-5 w-5"
                 fill="none"
@@ -111,11 +110,10 @@ export function Header() {
                   d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
                 />
               </svg>
-            </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-64 p-0">
             <SheetHeader className="p-6 pb-2">
-              <SheetTitle asChild>
+              <SheetTitle render={<div />}>
                 <Logo />
               </SheetTitle>
             </SheetHeader>
@@ -233,12 +231,10 @@ export function Header() {
         </Button>
 
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+          <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full" />}>
               <Avatar className="h-8 w-8">
                 <AvatarFallback className="text-xs">{initials}</AvatarFallback>
               </Avatar>
-            </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <div className="px-2 py-1.5">

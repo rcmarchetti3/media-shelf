@@ -190,12 +190,12 @@ export function CollectionPage() {
 
   const getSubtitle = (item: CollectionItem): string => {
     const meta = item.metadata ?? {};
-    if (item.media_type === "vinyl") return meta.artist || "";
+    if (item.media_type === "vinyl") return String(meta.artist ?? "");
     if (item.media_type === "book" || item.media_type === "audiobook")
-      return meta.author || (Array.isArray(meta.authors) ? meta.authors.join(", ") : "") || "";
+      return String(meta.author ?? (Array.isArray(meta.authors) ? meta.authors.join(", ") : ""));
     if (item.media_type === "movie" || item.media_type === "documentary")
-      return meta.genre || "";
-    if (item.media_type === "show") return meta.genre || "";
+      return String(meta.genre ?? "");
+    if (item.media_type === "show") return String(meta.genre ?? "");
     return "";
   };
 
