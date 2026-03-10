@@ -10,6 +10,7 @@ EXCLUDES=(
   --exclude='__pycache__'
   --exclude='.venv'
   --exclude='*.pyc'
+  --exclude='docker-compose.override.yml'
 )
 
 echo "==> Pushing to GitHub..."
