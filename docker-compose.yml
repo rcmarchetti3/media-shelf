@@ -1,0 +1,52 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mediashelf}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mediashelf_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-mediashelf}
+    volumes:
+      - mediashelf-pgdata:/var/lib/postgresql/data
+    networks:
+      - mediashelf-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mediashelf}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    env_file: .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://mediashelf:mediashelf_dev@db:5432/mediashelf}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - mediashelf-net
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      - api
+    networks:
+      - mediashelf-net
+    restart: unless-stopped
+
+volumes:
+  mediashelf-pgdata:
+
+networks:
+  mediashelf-net:
+    driver: bridge
