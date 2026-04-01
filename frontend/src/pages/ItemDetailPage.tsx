@@ -328,7 +328,8 @@ export function ItemDetailPage() {
         <div className="shrink-0">
           <button
             onClick={openArtworkDialog}
-            className="group relative h-64 w-44 overflow-hidden rounded-lg bg-muted flex items-center justify-center cursor-pointer border-2 border-transparent hover:border-primary/50 transition-colors"
+            className="group relative h-64 w-44 overflow-hidden rounded-sm bg-muted flex items-center justify-center cursor-pointer transition-all"
+            style={{border: "6px solid oklch(0.35 0.05 55)", boxShadow: "0 4px 14px oklch(0.10 0.02 50 / 0.45), inset 0 0 0 1px oklch(0.45 0.05 60 / 0.25)"}}
             title="Edit artwork"
           >
             {item.image_url ? (

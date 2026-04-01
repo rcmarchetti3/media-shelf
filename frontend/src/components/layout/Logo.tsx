@@ -32,7 +32,7 @@ export function Logo({ className, iconOnly = false }: LogoProps) {
         <rect x="23" y="13.5" width="2" height="1.5" rx="0.3" className="fill-background" opacity="0.6" />
       </svg>
       {!iconOnly && (
-        <span className="text-xl font-bold tracking-tight">
+        <span className="text-xl font-bold tracking-tight text-brass" style={{fontFamily: "var(--font-heading)"}}>
           MediaShelf
         </span>
       )}

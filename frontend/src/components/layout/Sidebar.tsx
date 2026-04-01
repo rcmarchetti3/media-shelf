@@ -30,7 +30,7 @@ export function Sidebar() {
   );
 
   return (
-    <aside className="hidden md:flex w-64 flex-col border-r border-border bg-card">
+    <aside className="sidebar-wood hidden md:flex w-64 flex-col border-r border-sidebar-border">
       <div className="p-6">
         <Logo />
       </div>
@@ -48,8 +48,8 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                 isActive
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                  ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-brass"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
               )}
             >
               {renderIcon(item.icon)}
@@ -60,7 +60,7 @@ export function Sidebar() {
 
         {/* Collection section */}
         <div className="pt-4">
-          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-brass-dark">
             Collection
           </p>
           {collectionNavItems.map((item) => {

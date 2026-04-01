@@ -26,38 +26,13 @@ import {
   icons,
 } from "./nav-items";
 
-type ThemeMode = "system" | "dark" | "light";
-
-function getThemeMode(): ThemeMode {
-  return (localStorage.getItem("theme") as ThemeMode) || "system";
-}
-
-function applyTheme(mode: ThemeMode) {
-  if (mode === "system") {
-    localStorage.removeItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    document.documentElement.classList.toggle("dark", prefersDark);
-  } else {
-    localStorage.setItem("theme", mode);
-    document.documentElement.classList.toggle("dark", mode === "dark");
-  }
-}
-
 export function Header() {
   const { user, logout } = useAuth();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [themeMode, setThemeMode] = useState<ThemeMode>(getThemeMode);
 
   const searchParams = new URLSearchParams(location.search);
   const currentType = searchParams.get("type");
-
-  const cycleTheme = () => {
-    const next: ThemeMode =
-      themeMode === "system" ? "dark" : themeMode === "dark" ? "light" : "system";
-    setThemeMode(next);
-    applyTheme(next);
-  };
 
   const renderIcon = (iconName: string) => (
     <svg
@@ -74,16 +49,6 @@ export function Header() {
       />
     </svg>
   );
-
-  const themeIcon =
-    themeMode === "dark"
-      ? "M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z"
-      : themeMode === "light"
-        ? "M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z"
-        : "M9 17.25v1.007a3 3 0 01-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0115 18.257V17.25m6-12V15a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 15V5.25m18 0A2.25 2.25 0 0018.75 3H5.25A2.25 2.25 0 003 5.25m18 0V12a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 12V5.25";
-
-  const themeLabel =
-    themeMode === "dark" ? "Dark" : themeMode === "light" ? "Light" : "System";
 
   const initials = user?.display_name
     ?.split(" ")
@@ -111,7 +76,7 @@ export function Header() {
                 />
               </svg>
           </SheetTrigger>
-          <SheetContent side="left" className="w-64 p-0">
+          <SheetContent side="left" className="sidebar-wood w-64 p-0 border-r-0">
             <SheetHeader className="p-6 pb-2">
               <SheetTitle render={<div />}>
                 <Logo />
@@ -167,8 +132,8 @@ export function Header() {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                         isActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-brass"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                     >
                       {renderIcon(item.icon)}
@@ -191,8 +156,8 @@ export function Header() {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
                         isActive
-                          ? "bg-accent text-accent-foreground"
-                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground border-l-2 border-brass"
+                          : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                       )}
                     >
                       {renderIcon(item.icon)}
@@ -209,27 +174,6 @@ export function Header() {
       <div className="flex-1" />
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={cycleTheme}
-          title={`Theme: ${themeLabel}`}
-        >
-          <svg
-            className="h-5 w-5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d={themeIcon}
-            />
-          </svg>
-        </Button>
-
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" className="relative h-8 w-8 rounded-full" />}>
               <Avatar className="h-8 w-8">
