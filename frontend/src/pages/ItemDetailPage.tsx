@@ -484,7 +484,7 @@ export function ItemDetailPage() {
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="None">
-                      {getStatusesForType(item.media_type).find((s) => s.value === editFields.status)?.label ?? editFields.status || "None"}
+                      {(getStatusesForType(item.media_type).find((s) => s.value === editFields.status)?.label ?? editFields.status) || "None"}
                     </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
