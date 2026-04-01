@@ -270,7 +270,9 @@ export function SearchPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue>
+                        {getStatusesForType(tab).find((s) => s.value === addForm.status)?.label ?? addForm.status}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {getStatusesForType(tab).map((s) => (
@@ -290,15 +292,17 @@ export function SearchPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="None" />
+                      <SelectValue placeholder="None">
+                        {addForm.rating ? `${"★".repeat(parseInt(addForm.rating))}` : "None"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">None</SelectItem>
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                      <SelectItem value="4">4</SelectItem>
-                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="1">★</SelectItem>
+                      <SelectItem value="2">★★</SelectItem>
+                      <SelectItem value="3">★★★</SelectItem>
+                      <SelectItem value="4">★★★★</SelectItem>
+                      <SelectItem value="5">★★★★★</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

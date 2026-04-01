@@ -47,6 +47,10 @@ const SORT_OPTIONS = [
   { value: "rating", label: "Rating" },
 ];
 
+function findLabel(options: { value: string; label: string }[], value: string): string {
+  return options.find((o) => o.value === value)?.label ?? value;
+}
+
 
 export function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -224,7 +228,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("media_type", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="All Types" />
+            <SelectValue placeholder="All Types">{findLabel(MEDIA_TYPES, mediaType)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {MEDIA_TYPES.map((t) => (
@@ -239,7 +243,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("status", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="All Statuses" />
+            <SelectValue placeholder="All Statuses">{findLabel(statuses, statusFilter)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {statuses.map((s) => (
@@ -254,7 +258,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("sort_by", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="Date Added" />
+            <SelectValue placeholder="Date Added">{findLabel(SORT_OPTIONS, sortBy)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {SORT_OPTIONS.map((s) => (

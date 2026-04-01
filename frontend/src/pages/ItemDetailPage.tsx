@@ -483,7 +483,9 @@ export function ItemDetailPage() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="None" />
+                    <SelectValue placeholder="None">
+                      {getStatusesForType(item.media_type).find((s) => s.value === editFields.status)?.label ?? editFields.status || "None"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {getStatusesForType(item.media_type).map((s) => (
@@ -503,7 +505,9 @@ export function ItemDetailPage() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="None" />
+                    <SelectValue placeholder="None">
+                      {editFields.rating ? "★".repeat(parseInt(editFields.rating)) : "None"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="">None</SelectItem>
