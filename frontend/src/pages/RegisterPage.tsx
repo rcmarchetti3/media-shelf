@@ -55,10 +55,10 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <Card className="w-full max-w-sm">
+    <div className="auth-bg flex min-h-screen items-center justify-center p-4">
+      <Card className="w-full max-w-sm border-2 border-border/60 shadow-2xl" style={{background: "linear-gradient(145deg, oklch(0.32 0.05 48), oklch(0.27 0.035 42))"}}>
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold tracking-tight">
+          <CardTitle className="text-2xl font-bold tracking-tight text-brass">
             MediaShelf
           </CardTitle>
           <CardDescription>Create your account</CardDescription>

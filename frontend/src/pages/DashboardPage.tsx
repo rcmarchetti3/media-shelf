@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { apiFetch } from "@/lib/api";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShelfGrid } from "@/components/ShelfGrid";
 import type { CollectionItem, CollectionStats } from "@/lib/types";
 
 export function DashboardPage() {
@@ -47,37 +48,31 @@ export function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {mediaTypes.map((type) => (
-          <Card key={type.key}>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
+          <div key={type.key} className="stat-plaque rounded-lg p-4 text-center">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">
                 {type.label}
-              </CardTitle>
+              </p>
               <svg
-                className="h-4 w-4 text-muted-foreground"
+                className="h-4 w-4 text-primary-foreground/60"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
                 strokeWidth={1.5}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d={type.icon}
-                />
+                <path strokeLinecap="round" strokeLinejoin="round" d={type.icon} />
               </svg>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <Skeleton className="h-8 w-12" />
-              ) : (
-                <p className="text-2xl font-bold">
-                  {stats?.[type.key as keyof CollectionStats] ?? 0}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+            </div>
+            {isLoading ? (
+              <Skeleton className="h-8 w-12 mx-auto" />
+            ) : (
+              <p className="text-2xl font-bold text-primary-foreground">
+                {stats?.[type.key as keyof CollectionStats] ?? 0}
+              </p>
+            )}
+          </div>
         ))}
       </div>
 
@@ -112,39 +107,7 @@ export function DashboardPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-            {recent.map((item) => (
-              <Link
-                key={item.id}
-                to={`/collection/${item.id}`}
-                className="group"
-              >
-                <Card className="overflow-hidden transition-colors hover:bg-accent">
-                  <div className="aspect-square bg-muted flex items-center justify-center">
-                    {item.image_url ? (
-                      <img
-                        src={item.image_url}
-                        alt={item.title}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <span className="text-3xl text-muted-foreground">
-                        {item.title[0]}
-                      </span>
-                    )}
-                  </div>
-                  <CardContent className="p-3">
-                    <p className="truncate text-sm font-medium">
-                      {item.title}
-                    </p>
-                    <p className="truncate text-xs text-muted-foreground capitalize">
-                      {item.media_type}
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <ShelfGrid items={recent} />
         )}
       </div>
     </div>

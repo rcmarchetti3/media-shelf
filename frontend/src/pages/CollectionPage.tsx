@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShelfGrid } from "@/components/ShelfGrid";
 import {
   Select,
   SelectContent,
@@ -402,53 +403,7 @@ export function CollectionPage() {
       ) : (
         <>
           {viewMode === "grid" ? (
-            <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-              {items.map((item) => (
-                <Link
-                  key={item.id}
-                  to={`/collection/${item.id}`}
-                  className="group"
-                  onClick={saveScroll}
-                >
-                  <Card className="overflow-hidden transition-colors hover:bg-accent">
-                    <div className="aspect-[3/4] bg-muted flex items-center justify-center relative">
-                      {item.image_url ? (
-                        <img
-                          src={item.image_url}
-                          alt={item.title}
-                          className="h-full w-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-4xl text-muted-foreground">
-                          {item.title[0]}
-                        </span>
-                      )}
-                      {item.is_favorite && (
-                        <span className="absolute top-2 right-2 text-yellow-500">
-                          ★
-                        </span>
-                      )}
-                    </div>
-                    <CardContent className="space-y-1 p-3">
-                      <p className="truncate text-sm font-medium">
-                        {item.title}
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-[10px] capitalize">
-                          {item.media_type}
-                        </Badge>
-                        {renderStars(item.rating)}
-                      </div>
-                      {item.added_by_name && (
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          by {item.added_by_name}
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+            <ShelfGrid items={items} onItemClick={saveScroll} />
           ) : (
             /* List / Table view */
             <Card className="overflow-hidden">
