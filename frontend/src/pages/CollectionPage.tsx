@@ -47,12 +47,6 @@ const SORT_OPTIONS = [
   { value: "rating", label: "Rating" },
 ];
 
-function getLabel(
-  options: { value: string; label: string }[],
-  value: string
-): string {
-  return options.find((o) => o.value === value)?.label ?? value;
-}
 
 export function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -230,9 +224,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("media_type", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="All Types">
-              {() => getLabel(MEDIA_TYPES, mediaType)}
-            </SelectValue>
+            <SelectValue placeholder="All Types" />
           </SelectTrigger>
           <SelectContent>
             {MEDIA_TYPES.map((t) => (
@@ -247,9 +239,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("status", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="All Statuses">
-              {() => getLabel(statuses, statusFilter)}
-            </SelectValue>
+            <SelectValue placeholder="All Statuses" />
           </SelectTrigger>
           <SelectContent>
             {statuses.map((s) => (
@@ -264,9 +254,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("sort_by", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="Date Added">
-              {() => getLabel(SORT_OPTIONS, sortBy)}
-            </SelectValue>
+            <SelectValue placeholder="Date Added" />
           </SelectTrigger>
           <SelectContent>
             {SORT_OPTIONS.map((s) => (
