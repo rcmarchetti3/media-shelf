@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { CollectionItem, PaginatedResponse } from "@/lib/types";
+import { ALL_STATUSES as STATUS_LIST } from "@/lib/statuses";
 
 const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "All Types" },
@@ -34,19 +35,10 @@ const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "audiobook", label: "Audiobooks" },
 ];
 
+// Prepend "All Statuses" option for collection-wide filter
 const ALL_STATUSES = [
   { value: "all", label: "All Statuses" },
-  { value: "owned", label: "Owned" },
-  { value: "wishlist", label: "Wishlist" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "dropped", label: "Dropped" },
-];
-
-const VINYL_STATUSES = [
-  { value: "all", label: "All Statuses" },
-  { value: "owned", label: "Owned" },
-  { value: "wishlist", label: "Wishlist" },
+  ...STATUS_LIST,
 ];
 
 const SORT_OPTIONS = [
@@ -208,7 +200,7 @@ export function CollectionPage() {
     });
   };
 
-  const statuses = mediaType === "vinyl" ? VINYL_STATUSES : ALL_STATUSES;
+  const statuses = ALL_STATUSES;
 
   return (
     <div className="space-y-6">

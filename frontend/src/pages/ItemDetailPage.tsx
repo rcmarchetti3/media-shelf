@@ -25,6 +25,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import type { CollectionItem, SearchResult, SearchResponse } from "@/lib/types";
+import { getStatusesForType, getStatusLabel, SEASON_KEYS } from "@/lib/statuses";
 
 function getSearchEndpoint(mediaType: string): string {
   switch (mediaType) {
@@ -57,14 +58,6 @@ function formatValue(value: unknown): string {
   return String(value ?? "");
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  owned: "Owned",
-  wishlist: "Wishlist",
-  in_progress: "In Progress",
-  completed: "Completed",
-  dropped: "Dropped",
-};
-
 export function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -80,6 +73,10 @@ export function ItemDetailPage() {
     notes: "",
     tags: "",
     is_favorite: false,
+  });
+  const [seasonFields, setSeasonFields] = useState({
+    current_season: "",
+    total_seasons: "",
   });
 
   // Artwork / metadata search state
@@ -103,14 +100,19 @@ export function ItemDetailPage() {
     setItem(data);
     setEditFields({
       rating: data.rating?.toString() ?? "",
-      status: data.status ?? "owned",
+      status: data.status ?? "",
       notes: data.notes ?? "",
       tags: data.tags?.join(", ") ?? "",
       is_favorite: data.is_favorite ?? false,
     });
     const meta = data.metadata ?? {};
+    setSeasonFields({
+      current_season: meta.current_season != null ? String(meta.current_season) : "",
+      total_seasons: meta.total_seasons != null ? String(meta.total_seasons) : "",
+    });
     const vals: Record<string, string> = {};
     for (const [key, value] of Object.entries(meta)) {
+      if (SEASON_KEYS.includes(key)) continue; // handled separately
       vals[key] = Array.isArray(value) ? value.join(", ") : String(value ?? "");
     }
     setMetaValues(vals);
@@ -157,11 +159,21 @@ export function ItemDetailPage() {
         }
       }
 
+      // Merge season fields into metadata (as numbers, omit if empty)
+      if (seasonFields.current_season !== "") {
+        const n = parseInt(seasonFields.current_season);
+        if (!isNaN(n)) mergedMeta.current_season = n;
+      }
+      if (seasonFields.total_seasons !== "") {
+        const n = parseInt(seasonFields.total_seasons);
+        if (!isNaN(n)) mergedMeta.total_seasons = n;
+      }
+
       const updated = await apiFetch<CollectionItem>(`/collection/${id}`, {
         method: "PATCH",
         body: JSON.stringify({
           rating: editFields.rating ? parseInt(editFields.rating) : null,
-          status: editFields.status,
+          status: editFields.status || null,
           notes: editFields.notes || null,
           tags: editFields.tags
             ? editFields.tags
@@ -364,7 +376,13 @@ export function ItemDetailPage() {
               )}
               {item.status && (
                 <Badge variant="secondary" className="capitalize">
-                  {STATUS_LABELS[item.status] ?? item.status}
+                  {getStatusLabel(item.status)}
+                </Badge>
+              )}
+              {item.media_type === "show" && (item.metadata?.current_season || item.metadata?.total_seasons) && (
+                <Badge variant="outline">
+                  Season {item.metadata.current_season ?? "?"}
+                  {item.metadata.total_seasons ? ` of ${item.metadata.total_seasons}` : ""}
                 </Badge>
               )}
               {item.rating && (
@@ -458,22 +476,18 @@ export function ItemDetailPage() {
                 <Select
                   value={editFields.status}
                   onValueChange={(v) =>
-                    setEditFields((prev) => ({ ...prev, status: v ?? "owned" }))
+                    setEditFields((prev) => ({ ...prev, status: v ?? "" }))
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="owned">Owned</SelectItem>
-                    <SelectItem value="wishlist">Wishlist</SelectItem>
-                    {item.media_type !== "vinyl" && (
-                      <>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="dropped">Dropped</SelectItem>
-                      </>
-                    )}
+                    {getStatusesForType(item.media_type).map((s) => (
+                      <SelectItem key={s.value} value={s.value}>
+                        {s.label}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -523,6 +537,36 @@ export function ItemDetailPage() {
                 </Button>
               </div>
             </div>
+
+            {/* Season tracking — shows only */}
+            {item.media_type === "show" && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Current Season</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="e.g. 3"
+                    value={seasonFields.current_season}
+                    onChange={(e) =>
+                      setSeasonFields((prev) => ({ ...prev, current_season: e.target.value }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Total Seasons</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    placeholder="e.g. 5"
+                    value={seasonFields.total_seasons}
+                    onChange={(e) =>
+                      setSeasonFields((prev) => ({ ...prev, total_seasons: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Notes */}
             <div className="space-y-2">

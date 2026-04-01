@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { SearchResult, SearchResponse, MediaType } from "@/lib/types";
+import { getStatusesForType, getDefaultStatusForType } from "@/lib/statuses";
 
 const MEDIA_TABS: { value: MediaType; label: string }[] = [
   { value: "vinyl", label: "Vinyl" },
@@ -47,7 +48,7 @@ export function SearchPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [selected, setSelected] = useState<SearchResult | null>(null);
-  const [addForm, setAddForm] = useState({ status: "owned", rating: "" });
+  const [addForm, setAddForm] = useState({ status: getDefaultStatusForType("vinyl"), rating: "" });
   const [isAdding, setIsAdding] = useState(false);
 
   const debouncedQuery = useDebounce(query, 300);
@@ -86,6 +87,7 @@ export function SearchPage() {
   useEffect(() => {
     setPage(1);
     setResults([]);
+    setAddForm((prev) => ({ ...prev, status: getDefaultStatusForType(tab) }));
   }, [tab, debouncedQuery]);
 
   const handleAdd = async () => {
@@ -256,22 +258,18 @@ export function SearchPage() {
                   <Select
                     value={addForm.status}
                     onValueChange={(v) =>
-                      setAddForm((prev) => ({ ...prev, status: v ?? "owned" }))
+                      setAddForm((prev) => ({ ...prev, status: v ?? getDefaultStatusForType(tab) }))
                     }
                   >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="owned">Owned</SelectItem>
-                      <SelectItem value="wishlist">Wishlist</SelectItem>
-                      {tab !== "vinyl" && (
-                        <>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="dropped">Dropped</SelectItem>
-                        </>
-                      )}
+                      {getStatusesForType(tab).map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
