@@ -73,6 +73,8 @@ export function SearchPage() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 503) {
         toast.error("API key not configured for this media type");
+      } else {
+        toast.error("Search failed. Please try again.");
       }
       setResults([]);
     } finally {
@@ -94,6 +96,12 @@ export function SearchPage() {
     if (!selected) return;
     setIsAdding(true);
     try {
+      // For shows, auto-populate total_seasons from TMDB's seasons_count field
+      const metadata = { ...(selected.metadata ?? {}) };
+      if (tab === "show" && metadata.seasons_count != null && metadata.total_seasons == null) {
+        metadata.total_seasons = metadata.seasons_count;
+      }
+
       await apiFetch("/collection/", {
         method: "POST",
         body: JSON.stringify({
@@ -101,7 +109,7 @@ export function SearchPage() {
           external_id: selected.external_id,
           title: selected.title,
           image_url: selected.image_url,
-          metadata: selected.metadata,
+          metadata,
           status: addForm.status,
           rating: addForm.rating ? parseInt(addForm.rating) : null,
         }),

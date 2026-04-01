@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { CollectionItem, PaginatedResponse } from "@/lib/types";
-import { ALL_STATUSES as STATUS_LIST } from "@/lib/statuses";
+import { ALL_STATUSES as STATUS_LIST, getStatusLabel } from "@/lib/statuses";
 
 const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "All Types" },
@@ -478,7 +478,7 @@ export function CollectionPage() {
                           onClick={saveScroll}
                           className="block capitalize text-muted-foreground text-xs"
                         >
-                          {item.status?.replace("_", " ") || "—"}
+                          {item.status ? getStatusLabel(item.status) : "—"}
                         </Link>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">

@@ -106,9 +106,12 @@ export function ItemDetailPage() {
       is_favorite: data.is_favorite ?? false,
     });
     const meta = data.metadata ?? {};
+    // total_seasons may not be set for shows added before this feature;
+    // fall back to seasons_count (the raw TMDB field) if available.
+    const totalSeasons = meta.total_seasons ?? meta.seasons_count;
     setSeasonFields({
       current_season: meta.current_season != null ? String(meta.current_season) : "",
-      total_seasons: meta.total_seasons != null ? String(meta.total_seasons) : "",
+      total_seasons: totalSeasons != null ? String(totalSeasons) : "",
     });
     const vals: Record<string, string> = {};
     for (const [key, value] of Object.entries(meta)) {

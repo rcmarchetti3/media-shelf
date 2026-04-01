@@ -74,6 +74,7 @@ export const ALL_STATUSES: StatusOption[] = [
   { value: "owned", label: "Owned" },
   { value: "wishlist", label: "Wishlist" },
   { value: "reading", label: "Reading" },
+  { value: "in_progress", label: "In Progress" },
   { value: "completed", label: "Completed" },
   { value: "dropped", label: "Dropped" },
   { value: "watched", label: "Watched" },
