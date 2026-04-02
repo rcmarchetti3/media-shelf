@@ -116,12 +116,12 @@
 .shelf-row {
   position: relative;
   display: flex;
-  gap: 14px;
+  gap: 20px;
   align-items: flex-end;
-  padding-bottom: 36px;
+  padding-bottom: 40px;
   margin-bottom: 8px;
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 8px;
+  padding-right: 8px;
 }
 
 /* Shelf plank top surface */
@@ -172,11 +172,19 @@
   z-index: 1;
   flex-shrink: 0;
   cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: inline-flex;
+  flex-direction: column;
+  transition: transform 0.18s ease, filter 0.18s ease;
 }
 
+/* Stagger items naturally like a real shelf */
+.shelf-item:nth-child(3n+1) { transform: translateY(2px); }
+.shelf-item:nth-child(3n+2) { transform: translateY(0px); }
+.shelf-item:nth-child(3n)   { transform: translateY(4px); }
+
 .shelf-item:hover {
-  transform: translateY(-8px);
+  transform: translateY(-12px) !important;
+  filter: brightness(1.08);
 }
 
 .shelf-item .item-cover {
@@ -186,9 +194,10 @@
   justify-content: center;
   background: oklch(0.28 0.03 52);
   font-family: var(--font-heading);
-  font-size: 1.8rem;
+  font-size: 2.2rem;
   font-weight: 700;
   color: oklch(0.55 0.05 60);
+  flex-shrink: 0;
 }
 
 .shelf-item .item-cover img {
@@ -199,24 +208,40 @@
 }
 
 .shelf-item .item-info {
-  padding: 5px 7px 6px;
-  background: oklch(0.26 0.02 52);
-  border-top: 1px solid oklch(0.32 0.03 55);
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32px 8px 9px;
+  background: linear-gradient(to bottom, transparent 0%, oklch(0.10 0.02 50 / 0.93) 100%);
+  opacity: 0;
+  transform: translateY(3px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+  min-width: 0;
+}
+
+.shelf-item:hover .item-info {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .shelf-item .item-title {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   font-weight: 600;
-  color: var(--parchment);
+  color: oklch(0.93 0.02 80);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-shadow: 0 1px 3px oklch(0.08 0.01 50 / 0.8);
 }
 
 .shelf-item .item-meta {
-  font-size: 0.6rem;
-  color: var(--muted-foreground);
-  margin-top: 1px;
+  font-size: 0.62rem;
+  color: oklch(0.72 0.06 65);
+  margin-top: 2px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -224,28 +249,28 @@
 
 .shelf-item .item-stars {
   color: var(--brass);
-  font-size: 0.6rem;
+  font-size: 0.62rem;
   margin-top: 2px;
   letter-spacing: -0.5px;
 }
 
 /* ===== VINYL: square, record peeking out ===== */
 .shelf-item.type-vinyl .item-cover {
-  width: 110px;
-  height: 110px;
+  width: 148px;
+  height: 148px;
   border-radius: 2px;
   position: relative;
-  box-shadow: 2px 0 8px oklch(0.10 0.02 50 / 0.5);
+  box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
 }
 
 /* The vinyl record disc peeking up and right */
 .shelf-item.type-vinyl .item-cover::before {
   content: '';
   position: absolute;
-  top: -10px;
-  right: -8px;
-  width: 100px;
-  height: 100px;
+  top: -14px;
+  right: -12px;
+  width: 136px;
+  height: 136px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%,
@@ -257,7 +282,7 @@
       oklch(0.14 0.01 50) 72.5%, oklch(0.16 0.01 50) 73%,
       oklch(0.17 0.01 50) 73%, oklch(0.17 0.01 50) 100%);
   z-index: -1;
-  box-shadow: 1px 2px 6px oklch(0.10 0.01 50 / 0.5);
+  box-shadow: 2px 3px 8px oklch(0.10 0.01 50 / 0.5);
   pointer-events: none;
 }
 
@@ -265,10 +290,10 @@
 .shelf-item.type-vinyl .item-cover::after {
   content: '';
   position: absolute;
-  top: -4px;
-  right: -2px;
-  width: 10px;
-  height: 10px;
+  top: -6px;
+  right: -4px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: oklch(0.52 0.06 65);
   z-index: 0;
@@ -277,12 +302,12 @@
 
 /* ===== BOOK: tall portrait, spine on left, page edges on right ===== */
 .shelf-item.type-book .item-cover {
-  width: 78px;
-  height: 110px;
+  width: 105px;
+  height: 150px;
   border-radius: 0 2px 2px 0;
   position: relative;
   box-shadow:
-    2px 0 8px oklch(0.10 0.02 50 / 0.5),
+    3px 0 10px oklch(0.10 0.02 50 / 0.55),
     inset -1px 0 2px oklch(0.15 0.02 50 / 0.3);
 }
 
@@ -291,7 +316,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 10px; height: 100%;
+  width: 13px; height: 100%;
   background: linear-gradient(90deg,
     oklch(0.20 0.03 50), oklch(0.26 0.04 52), oklch(0.22 0.03 50));
   pointer-events: none;
@@ -301,8 +326,8 @@
 .shelf-item.type-book .item-cover::after {
   content: '';
   position: absolute;
-  top: 2px; right: -4px;
-  width: 5px; height: calc(100% - 4px);
+  top: 2px; right: -5px;
+  width: 6px; height: calc(100% - 4px);
   background: repeating-linear-gradient(
     180deg,
     oklch(0.84 0.02 80) 0px, oklch(0.84 0.02 80) 1px,
@@ -311,15 +336,15 @@
   pointer-events: none;
 }
 
-/* ===== MOVIE / SHOW / DOC: thin tall DVD-case proportions ===== */
+/* ===== MOVIE / SHOW / DOC: tall case proportions ===== */
 .shelf-item.type-movie .item-cover,
 .shelf-item.type-show .item-cover,
 .shelf-item.type-documentary .item-cover {
-  width: 68px;
-  height: 100px;
+  width: 92px;
+  height: 136px;
   border-radius: 1px 3px 3px 1px;
   position: relative;
-  box-shadow: 2px 0 8px oklch(0.10 0.02 50 / 0.5);
+  box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
   overflow: hidden;
 }
 
@@ -330,7 +355,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 7px; height: 100%;
+  width: 9px; height: 100%;
   background: linear-gradient(90deg,
     oklch(0.16 0.01 50), oklch(0.23 0.02 52), oklch(0.18 0.01 50));
   pointer-events: none;
@@ -351,11 +376,11 @@
 
 /* ===== AUDIOBOOK: square CD jewel-case ===== */
 .shelf-item.type-audiobook .item-cover {
-  width: 80px;
-  height: 80px;
+  width: 110px;
+  height: 110px;
   border-radius: 2px;
   position: relative;
-  box-shadow: 2px 0 8px oklch(0.10 0.02 50 / 0.5);
+  box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
   overflow: hidden;
 }
 
@@ -363,8 +388,8 @@
 .shelf-item.type-audiobook .item-cover::before {
   content: '';
   position: absolute;
-  bottom: -16px; right: -16px;
-  width: 54px; height: 54px;
+  bottom: -20px; right: -20px;
+  width: 74px; height: 74px;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%,
@@ -381,7 +406,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 6px; height: 100%;
+  width: 8px; height: 100%;
   background: linear-gradient(90deg,
     oklch(0.16 0.01 220), oklch(0.28 0.02 220), oklch(0.18 0.01 220));
   pointer-events: none;

@@ -14,10 +14,9 @@ function useColumns(containerRef: React.RefObject<HTMLDivElement | null>): numbe
     function update() {
       const w = containerRef.current?.offsetWidth ?? window.innerWidth;
       if (w < 480) setCols(2);
-      else if (w < 640) setCols(3);
-      else if (w < 900) setCols(4);
-      else if (w < 1200) setCols(5);
-      else setCols(6);
+      else if (w < 700) setCols(3);
+      else if (w < 1000) setCols(4);
+      else setCols(5);
     }
     update();
     const ro = new ResizeObserver(update);

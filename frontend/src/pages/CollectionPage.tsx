@@ -209,7 +209,7 @@ export function CollectionPage() {
             Browse and manage your media collection.
           </p>
         </div>
-        <Link to="/search">
+        <Link to={`/search${mediaType !== "all" ? `?type=${mediaType}` : ""}`}>
           <Button className="w-full sm:w-auto">Add Items</Button>
         </Link>
       </div>
@@ -377,7 +377,7 @@ export function CollectionPage() {
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
             <p className="text-muted-foreground">No items found.</p>
             <Link
-              to="/search"
+              to={`/search${mediaType !== "all" ? `?type=${mediaType}` : ""}`}
               className="mt-2 text-sm text-primary hover:underline"
             >
               Search for something to add
