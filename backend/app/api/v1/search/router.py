@@ -5,7 +5,7 @@ from app.dependencies import get_current_user
 from app.models.user import User
 from app.schemas.search import SearchResponse
 from app.services.external.discogs import discogs_client
-from app.services.external.openlibrary import openlibrary_client
+from app.services.external.googlebooks import googlebooks_client
 from app.services.external.tmdb import tmdb_client
 
 router = APIRouter()
@@ -50,7 +50,9 @@ async def search_books(
     page: int = Query(1, ge=1),
     current_user: User = Depends(get_current_user),
 ):
-    return await _handle_external_call(openlibrary_client.search(q, page), "Open Library")
+    if not googlebooks_client.is_configured:
+        _api_not_configured("Google Books")
+    return await _handle_external_call(googlebooks_client.search(q, page), "Google Books")
 
 
 @router.get("/movies", response_model=SearchResponse)
@@ -88,8 +90,10 @@ async def get_item_details(
             discogs_client.get_release(external_id), "Discogs"
         )
     elif media_type == "book":
+        if not googlebooks_client.is_configured:
+            _api_not_configured("Google Books")
         return await _handle_external_call(
-            openlibrary_client.get_work(external_id), "Open Library"
+            googlebooks_client.get_volume(external_id), "Google Books"
         )
     elif media_type == "movie":
         if not tmdb_client.is_configured:
