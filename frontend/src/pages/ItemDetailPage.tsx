@@ -382,7 +382,7 @@ export function ItemDetailPage() {
                   {getStatusLabel(item.status)}
                 </Badge>
               )}
-              {item.media_type === "show" && (item.metadata?.current_season || item.metadata?.total_seasons) && (
+              {item.media_type === "show" && (item.metadata?.current_season != null || item.metadata?.total_seasons != null) && (
                 <Badge variant="outline">
                   Season {String(item.metadata.current_season ?? "?")}
                   {item.metadata.total_seasons ? ` of ${String(item.metadata.total_seasons)}` : ""}
