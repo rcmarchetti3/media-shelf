@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-SERVER="192.168.5.118"
+SERVER="rmarchetti3@192.168.5.118"
 REMOTE_DIR="~/docker/media-shelf"
 EXCLUDES=(
   --exclude='.git'
