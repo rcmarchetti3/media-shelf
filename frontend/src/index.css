@@ -336,50 +336,42 @@
   pointer-events: none;
 }
 
-/* ===== MOVIE / SHOW / DOC: Blu-ray case ===== */
+/* ===== MOVIE / SHOW / DOC: tall case proportions ===== */
 .shelf-item.type-movie .item-cover,
 .shelf-item.type-show .item-cover,
 .shelf-item.type-documentary .item-cover {
-  width: 88px;
-  height: 144px;
+  width: 92px;
+  height: 136px;
   border-radius: 1px 3px 3px 1px;
   position: relative;
-  box-shadow:
-    3px 0 10px oklch(0.10 0.02 50 / 0.55),
-    inset 0 0 0 1px oklch(0.42 0.14 240 / 0.20);
+  box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
   overflow: hidden;
 }
 
-/* Blu-ray blue spine */
+/* Case spine */
 .shelf-item.type-movie .item-cover::before,
 .shelf-item.type-show .item-cover::before,
 .shelf-item.type-documentary .item-cover::before {
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 11px; height: 100%;
+  width: 9px; height: 100%;
   background: linear-gradient(90deg,
-    oklch(0.28 0.18 245) 0%,
-    oklch(0.44 0.22 242) 35%,
-    oklch(0.50 0.24 240) 50%,
-    oklch(0.40 0.20 242) 70%,
-    oklch(0.26 0.16 245) 100%);
+    oklch(0.16 0.01 50), oklch(0.23 0.02 52), oklch(0.18 0.01 50));
   pointer-events: none;
-  z-index: 1;
 }
 
-/* Plastic case sheen — top highlight + right edge reflection */
+/* Plastic sheen */
 .shelf-item.type-movie .item-cover::after,
 .shelf-item.type-show .item-cover::after,
 .shelf-item.type-documentary .item-cover::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, oklch(0.98 0.00 0 / 0.09) 0%, transparent 30%),
-    linear-gradient(90deg, transparent 85%, oklch(0.98 0.00 0 / 0.06) 100%);
+  top: 0; left: 0; right: 0;
+  height: 35%;
+  background: linear-gradient(180deg,
+    oklch(0.95 0.01 80 / 0.07) 0%, transparent 100%);
   pointer-events: none;
-  z-index: 1;
 }
 
 /* ===== AUDIOBOOK: square CD jewel-case ===== */
