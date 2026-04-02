@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { SearchResult, SearchResponse, MediaType } from "@/lib/types";
+import { getStatusesForType, getDefaultStatusForType } from "@/lib/statuses";
 
 const MEDIA_TABS: { value: MediaType; label: string }[] = [
   { value: "vinyl", label: "Vinyl" },
@@ -47,7 +48,7 @@ export function SearchPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [selected, setSelected] = useState<SearchResult | null>(null);
-  const [addForm, setAddForm] = useState({ status: "owned", rating: "" });
+  const [addForm, setAddForm] = useState({ status: getDefaultStatusForType("vinyl"), rating: "" });
   const [isAdding, setIsAdding] = useState(false);
 
   const debouncedQuery = useDebounce(query, 300);
@@ -72,6 +73,8 @@ export function SearchPage() {
     } catch (err) {
       if (err instanceof ApiError && err.status === 503) {
         toast.error("API key not configured for this media type");
+      } else {
+        toast.error("Search failed. Please try again.");
       }
       setResults([]);
     } finally {
@@ -86,12 +89,19 @@ export function SearchPage() {
   useEffect(() => {
     setPage(1);
     setResults([]);
+    setAddForm((prev) => ({ ...prev, status: getDefaultStatusForType(tab) }));
   }, [tab, debouncedQuery]);
 
   const handleAdd = async () => {
     if (!selected) return;
     setIsAdding(true);
     try {
+      // For shows, auto-populate total_seasons from TMDB's seasons_count field
+      const metadata = { ...(selected.metadata ?? {}) };
+      if (tab === "show" && metadata.seasons_count != null && metadata.total_seasons == null) {
+        metadata.total_seasons = metadata.seasons_count;
+      }
+
       await apiFetch("/collection/", {
         method: "POST",
         body: JSON.stringify({
@@ -99,7 +109,7 @@ export function SearchPage() {
           external_id: selected.external_id,
           title: selected.title,
           image_url: selected.image_url,
-          metadata: selected.metadata,
+          metadata,
           status: addForm.status,
           rating: addForm.rating ? parseInt(addForm.rating) : null,
         }),
@@ -256,22 +266,20 @@ export function SearchPage() {
                   <Select
                     value={addForm.status}
                     onValueChange={(v) =>
-                      setAddForm((prev) => ({ ...prev, status: v ?? "owned" }))
+                      setAddForm((prev) => ({ ...prev, status: v ?? getDefaultStatusForType(tab) }))
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue>
+                        {getStatusesForType(tab).find((s) => s.value === addForm.status)?.label ?? addForm.status}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="owned">Owned</SelectItem>
-                      <SelectItem value="wishlist">Wishlist</SelectItem>
-                      {tab !== "vinyl" && (
-                        <>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="dropped">Dropped</SelectItem>
-                        </>
-                      )}
+                      {getStatusesForType(tab).map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -284,15 +292,17 @@ export function SearchPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="None" />
+                      <SelectValue placeholder="None">
+                        {addForm.rating ? `${"★".repeat(parseInt(addForm.rating))}` : "None"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">None</SelectItem>
-                      <SelectItem value="1">1</SelectItem>
-                      <SelectItem value="2">2</SelectItem>
-                      <SelectItem value="3">3</SelectItem>
-                      <SelectItem value="4">4</SelectItem>
-                      <SelectItem value="5">5</SelectItem>
+                      <SelectItem value="1">★</SelectItem>
+                      <SelectItem value="2">★★</SelectItem>
+                      <SelectItem value="3">★★★</SelectItem>
+                      <SelectItem value="4">★★★★</SelectItem>
+                      <SelectItem value="5">★★★★★</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

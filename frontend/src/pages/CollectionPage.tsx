@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { CollectionItem, PaginatedResponse } from "@/lib/types";
+import { ALL_STATUSES as STATUS_LIST, getStatusLabel } from "@/lib/statuses";
 
 const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "All Types" },
@@ -34,19 +35,10 @@ const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "audiobook", label: "Audiobooks" },
 ];
 
+// Prepend "All Statuses" option for collection-wide filter
 const ALL_STATUSES = [
   { value: "all", label: "All Statuses" },
-  { value: "owned", label: "Owned" },
-  { value: "wishlist", label: "Wishlist" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "completed", label: "Completed" },
-  { value: "dropped", label: "Dropped" },
-];
-
-const VINYL_STATUSES = [
-  { value: "all", label: "All Statuses" },
-  { value: "owned", label: "Owned" },
-  { value: "wishlist", label: "Wishlist" },
+  ...STATUS_LIST,
 ];
 
 const SORT_OPTIONS = [
@@ -55,12 +47,10 @@ const SORT_OPTIONS = [
   { value: "rating", label: "Rating" },
 ];
 
-function getLabel(
-  options: { value: string; label: string }[],
-  value: string
-): string {
+function findLabel(options: { value: string; label: string }[], value: string): string {
   return options.find((o) => o.value === value)?.label ?? value;
 }
+
 
 export function CollectionPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -208,7 +198,7 @@ export function CollectionPage() {
     });
   };
 
-  const statuses = mediaType === "vinyl" ? VINYL_STATUSES : ALL_STATUSES;
+  const statuses = ALL_STATUSES;
 
   return (
     <div className="space-y-6">
@@ -238,9 +228,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("media_type", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="All Types">
-              {() => getLabel(MEDIA_TYPES, mediaType)}
-            </SelectValue>
+            <SelectValue placeholder="All Types">{findLabel(MEDIA_TYPES, mediaType)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {MEDIA_TYPES.map((t) => (
@@ -255,9 +243,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("status", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="All Statuses">
-              {() => getLabel(statuses, statusFilter)}
-            </SelectValue>
+            <SelectValue placeholder="All Statuses">{findLabel(statuses, statusFilter)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {statuses.map((s) => (
@@ -272,9 +258,7 @@ export function CollectionPage() {
           onValueChange={(v) => updateFilter("sort_by", v)}
         >
           <SelectTrigger className="w-[calc(50%-0.25rem)] sm:w-36">
-            <SelectValue placeholder="Date Added">
-              {() => getLabel(SORT_OPTIONS, sortBy)}
-            </SelectValue>
+            <SelectValue placeholder="Date Added">{findLabel(SORT_OPTIONS, sortBy)}</SelectValue>
           </SelectTrigger>
           <SelectContent>
             {SORT_OPTIONS.map((s) => (
@@ -486,7 +470,7 @@ export function CollectionPage() {
                           onClick={saveScroll}
                           className="block capitalize text-muted-foreground text-xs"
                         >
-                          {item.status?.replace("_", " ") || "—"}
+                          {item.status ? getStatusLabel(item.status) : "—"}
                         </Link>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
