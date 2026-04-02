@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { apiFetch, ApiError } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,15 +41,25 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+// Map collection media types to the available search tabs
+function toSearchTab(type: string): MediaType {
+  if (type === "documentary") return "movie";
+  if (type === "audiobook") return "book";
+  if ((["vinyl", "book", "movie", "show"] as string[]).includes(type)) return type as MediaType;
+  return "vinyl";
+}
+
 export function SearchPage() {
+  const [searchParams] = useSearchParams();
+  const initialTab = toSearchTab(searchParams.get("type") ?? "vinyl");
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<MediaType>("vinyl");
+  const [tab, setTab] = useState<MediaType>(initialTab);
   const [results, setResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [selected, setSelected] = useState<SearchResult | null>(null);
-  const [addForm, setAddForm] = useState({ status: getDefaultStatusForType("vinyl"), rating: "" });
+  const [addForm, setAddForm] = useState({ status: getDefaultStatusForType(initialTab), rating: "" });
   const [isAdding, setIsAdding] = useState(false);
 
   const debouncedQuery = useDebounce(query, 300);
