@@ -6,6 +6,7 @@ class OpenLibraryClient(BaseAPIClient):
         super().__init__(
             base_url="https://openlibrary.org",
             rate_limit=0.5,  # Be reasonable with public API
+            timeout=30.0,  # Open Library can be slow
         )
 
     @property
@@ -34,7 +35,7 @@ class OpenLibraryClient(BaseAPIClient):
                     "subtitle": ", ".join(doc.get("author_name", [])[:3]),
                     "image_url": cover_url,
                     "media_type": "book",
-                    "year": str(doc.get("first_publish_year", "")),
+                    "year": str(doc["first_publish_year"]) if doc.get("first_publish_year") else None,
                     "metadata": {
                         "authors": doc.get("author_name", []),
                         "isbn_13": (doc.get("isbn", [None])[0])
