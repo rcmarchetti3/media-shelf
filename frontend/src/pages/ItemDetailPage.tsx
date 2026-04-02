@@ -384,8 +384,8 @@ export function ItemDetailPage() {
               )}
               {item.media_type === "show" && (item.metadata?.current_season || item.metadata?.total_seasons) && (
                 <Badge variant="outline">
-                  Season {item.metadata.current_season ?? "?"}
-                  {item.metadata.total_seasons ? ` of ${item.metadata.total_seasons}` : ""}
+                  Season {String(item.metadata.current_season ?? "?")}
+                  {item.metadata.total_seasons ? ` of ${String(item.metadata.total_seasons)}` : ""}
                 </Badge>
               )}
               {item.rating && (
