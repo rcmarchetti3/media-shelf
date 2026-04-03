@@ -10,6 +10,26 @@ function renderStars(rating: number | null) {
   );
 }
 
+function getStatusClass(status: string | null): string {
+  switch (status) {
+    case "completed":
+    case "watched":
+      return "status-completed";
+    case "reading":
+    case "watching":
+      return "status-in-progress";
+    case "wishlist":
+    case "want_to_watch":
+      return "status-wishlist";
+    case "dropped":
+      return "status-dropped";
+    case "owned":
+      return "status-owned";
+    default:
+      return "";
+  }
+}
+
 type ShelfItemProps = {
   item: CollectionItem;
   onClick?: () => void;
@@ -17,11 +37,12 @@ type ShelfItemProps = {
 
 export function ShelfItem({ item, onClick }: ShelfItemProps) {
   const typeClass = `type-${item.media_type}`;
+  const statusClass = getStatusClass(item.status);
 
   return (
     <Link
       to={`/collection/${item.id}`}
-      className={`shelf-item ${typeClass}`}
+      className={`shelf-item ${typeClass} ${statusClass}`}
       onClick={onClick}
     >
       <div className="item-cover">

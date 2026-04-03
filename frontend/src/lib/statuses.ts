@@ -87,5 +87,26 @@ export function getStatusLabel(status: string): string {
   return ALL_STATUSES.find((s) => s.value === status)?.label ?? status;
 }
 
+/** Status icon symbol for shelf display */
+export function getStatusIcon(status: string | null): string | null {
+  switch (status) {
+    case "completed":
+    case "watched":
+      return "✓";
+    case "reading":
+    case "watching":
+      return "▶";
+    case "owned":
+      return "●";
+    case "wishlist":
+    case "want_to_watch":
+      return "♡";
+    case "dropped":
+      return "✕";
+    default:
+      return null;
+  }
+}
+
 /** Metadata keys reserved for the season UI — hidden from generic metadata fields */
 export const SEASON_KEYS = ["current_season", "total_seasons"];
