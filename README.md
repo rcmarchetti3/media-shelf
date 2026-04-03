@@ -18,6 +18,30 @@
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.png" width="800" alt="Dashboard — collection overview with stats and recently added items" />
+</p>
+<p align="center"><em>Dashboard with collection stats and recently added shelf</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/collection.png" width="800" alt="Collection grid — vinyl records displayed on wooden shelves" />
+</p>
+<p align="center"><em>Collection grid view with responsive shelf layout</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/search.png" width="800" alt="Search — find and add media from external APIs" />
+</p>
+<p align="center"><em>Search and add media from Discogs, TMDB, and Google Books</em></p>
+
+<p align="center">
+  <img src="docs/screenshots/mobile.png" width="300" alt="Mobile view — responsive 2-column layout" />
+</p>
+<p align="center"><em>Mobile-responsive layout</em></p>
+
+---
+
 ## What is MediaShelf?
 
 MediaShelf is a lightweight, Docker-based web app designed for small households (1–2 people) to catalog their personal media collections. Search for media using real external APIs, add items to your collection, rate them, tag them, and track what you own.
@@ -25,15 +49,17 @@ MediaShelf is a lightweight, Docker-based web app designed for small households 
 ### Supported Media Types
 
 - **Vinyl Records** — powered by Discogs
-- **Books** — powered by Open Library
+- **Books** — powered by Google Books
 - **Movies & Documentaries** — powered by TMDB
 - **TV Shows** — powered by TMDB
-- **Audiobooks** — powered by Open Library
+- **Audiobooks** — powered by Google Books
 
 ### Key Features
 
 - **Search & Add** — Search external APIs and add items to your collection in one click
 - **Collection Management** — Filter, sort, and browse by media type, status, rating, favorites, and tags
+- **Status Tracking** — Color-coded glow borders indicate item status at a glance (completed, in progress, wishlist, owned, dropped)
+- **Responsive Shelf Layout** — Items fill the shelf width naturally, scaling from 2 columns on mobile to 6 on large monitors
 - **Household Support** — Multiple user accounts with admin/member roles; view each other's collections
 - **Dark Mode First** — Clean dark UI with light mode and system theme options
 - **Fully Self-Hosted** — Runs entirely on your own hardware via Docker Compose
@@ -98,7 +124,7 @@ The first user to register automatically becomes the **admin**.
                     ┌──────┴──────┐
                     │ External APIs│
                     │ Discogs     │
-                    │ Open Library│
+                    │ Google Books│
                     │ TMDB        │
                     └─────────────┘
 ```
@@ -201,7 +227,7 @@ media-shelf/
 │   │   ├── api/v1/          # Route handlers (auth, collection, search, users)
 │   │   ├── models/          # SQLAlchemy models
 │   │   ├── schemas/         # Pydantic request/response schemas
-│   │   ├── services/        # External API clients (Discogs, TMDB, Open Library)
+│   │   ├── services/        # External API clients (Discogs, TMDB, Google Books)
 │   │   ├── config.py        # Environment config
 │   │   ├── database.py      # Async DB engine & session
 │   │   ├── dependencies.py  # Auth dependencies
@@ -240,9 +266,9 @@ media-shelf/
 3. Request an API key (choose "Developer" for personal use)
 4. Copy the API key (v3 auth) to `TMDB_API_KEY` in your `.env`
 
-### Open Library (Books, Audiobooks)
+### Google Books (Books, Audiobooks)
 
-No API key needed — Open Library's API is free and open.
+No API key needed — the Google Books API is free for basic usage.
 
 ---
 
