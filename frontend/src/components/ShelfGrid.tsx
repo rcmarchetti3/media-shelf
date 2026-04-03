@@ -8,15 +8,16 @@ type ShelfGridProps = {
 };
 
 function useColumns(containerRef: React.RefObject<HTMLDivElement | null>): number {
-  const [cols, setCols] = useState(6);
+  const [cols, setCols] = useState(5);
 
   useEffect(() => {
     function update() {
       const w = containerRef.current?.offsetWidth ?? window.innerWidth;
-      if (w < 480) setCols(2);
-      else if (w < 700) setCols(3);
-      else if (w < 1000) setCols(4);
-      else setCols(5);
+      if (w < 400) setCols(2);
+      else if (w < 600) setCols(3);
+      else if (w < 900) setCols(4);
+      else if (w < 1200) setCols(5);
+      else setCols(6);
     }
     update();
     const ro = new ResizeObserver(update);
@@ -40,7 +41,7 @@ export function ShelfGrid({ items, onItemClick }: ShelfGridProps) {
   return (
     <div ref={containerRef} className="space-y-0">
       {rows.map((row, rowIdx) => (
-        <div key={rowIdx} className="shelf-row">
+        <div key={rowIdx} className="shelf-row" style={{ '--cols': cols } as React.CSSProperties}>
           {row.map((item) => (
             <ShelfItem key={item.id} item={item} onClick={onItemClick} />
           ))}

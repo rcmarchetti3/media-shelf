@@ -115,23 +115,24 @@
 /* ===== SHELF ROW ===== */
 .shelf-row {
   position: relative;
-  display: flex;
-  gap: 20px;
-  align-items: flex-end;
-  padding-bottom: 40px;
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 5), 1fr);
+  gap: clamp(8px, 2vw, 20px);
+  align-items: end;
+  padding-bottom: clamp(28px, 5vw, 40px);
   margin-bottom: 8px;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding-left: clamp(4px, 1vw, 8px);
+  padding-right: clamp(4px, 1vw, 8px);
 }
 
 /* Shelf plank top surface */
 .shelf-row::after {
   content: '';
   position: absolute;
-  bottom: 8px;
+  bottom: clamp(5px, 1vw, 8px);
   left: -8px;
   right: -8px;
-  height: 24px;
+  height: clamp(16px, 3vw, 24px);
   background: linear-gradient(90deg,
     var(--shelf-dark) 0%,
     var(--shelf-plank) 8%,
@@ -159,7 +160,7 @@
   bottom: 0;
   left: -8px;
   right: -8px;
-  height: 8px;
+  height: clamp(5px, 1vw, 8px);
   background: linear-gradient(180deg, oklch(0.32 0.04 55), oklch(0.27 0.03 50));
   border-radius: 0 0 2px 2px;
   box-shadow: 0 4px 8px oklch(0.08 0.02 50 / 0.6);
@@ -170,9 +171,9 @@
 .shelf-item {
   position: relative;
   z-index: 1;
-  flex-shrink: 0;
+  min-width: 0;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   flex-direction: column;
   transition: transform 0.18s ease, filter 0.18s ease;
 }
@@ -188,16 +189,17 @@
 }
 
 .shelf-item .item-cover {
+  position: relative;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
   background: oklch(0.28 0.03 52);
   font-family: var(--font-heading);
   font-size: 2.2rem;
   font-weight: 700;
   color: oklch(0.55 0.05 60);
-  flex-shrink: 0;
 }
 
 .shelf-item .item-cover img {
@@ -206,6 +208,7 @@
   object-fit: cover;
   display: block;
 }
+
 
 .shelf-item .item-info {
   position: absolute;
@@ -229,7 +232,7 @@
 }
 
 .shelf-item .item-title {
-  font-size: 0.72rem;
+  font-size: clamp(0.58rem, 1.2vw, 0.72rem);
   font-weight: 600;
   color: oklch(0.93 0.02 80);
   white-space: nowrap;
@@ -239,7 +242,7 @@
 }
 
 .shelf-item .item-meta {
-  font-size: 0.62rem;
+  font-size: clamp(0.5rem, 1vw, 0.62rem);
   color: oklch(0.72 0.06 65);
   margin-top: 2px;
   white-space: nowrap;
@@ -256,8 +259,7 @@
 
 /* ===== VINYL: square, record peeking out ===== */
 .shelf-item.type-vinyl .item-cover {
-  width: 148px;
-  height: 148px;
+  aspect-ratio: 1 / 1;
   border-radius: 2px;
   position: relative;
   box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
@@ -267,10 +269,10 @@
 .shelf-item.type-vinyl .item-cover::before {
   content: '';
   position: absolute;
-  top: -14px;
-  right: -12px;
-  width: 136px;
-  height: 136px;
+  top: -9.5%;
+  right: -8%;
+  width: 92%;
+  height: 92%;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%,
@@ -290,10 +292,10 @@
 .shelf-item.type-vinyl .item-cover::after {
   content: '';
   position: absolute;
-  top: -6px;
-  right: -4px;
-  width: 14px;
-  height: 14px;
+  top: -4%;
+  right: -2.7%;
+  width: 9.5%;
+  height: 9.5%;
   border-radius: 50%;
   background: oklch(0.52 0.06 65);
   z-index: 0;
@@ -302,8 +304,7 @@
 
 /* ===== BOOK: tall portrait, spine on left, page edges on right ===== */
 .shelf-item.type-book .item-cover {
-  width: 105px;
-  height: 150px;
+  aspect-ratio: 105 / 150;
   border-radius: 0 2px 2px 0;
   position: relative;
   box-shadow:
@@ -316,7 +317,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 13px; height: 100%;
+  width: 12.4%; height: 100%;
   background: linear-gradient(90deg,
     oklch(0.20 0.03 50), oklch(0.26 0.04 52), oklch(0.22 0.03 50));
   pointer-events: none;
@@ -326,8 +327,8 @@
 .shelf-item.type-book .item-cover::after {
   content: '';
   position: absolute;
-  top: 2px; right: -5px;
-  width: 6px; height: calc(100% - 4px);
+  top: 1.3%; right: -4.8%;
+  width: 5.7%; height: calc(100% - 2.7%);
   background: repeating-linear-gradient(
     180deg,
     oklch(0.84 0.02 80) 0px, oklch(0.84 0.02 80) 1px,
@@ -340,8 +341,7 @@
 .shelf-item.type-movie .item-cover,
 .shelf-item.type-show .item-cover,
 .shelf-item.type-documentary .item-cover {
-  width: 92px;
-  height: 136px;
+  aspect-ratio: 92 / 136;
   border-radius: 1px 3px 3px 1px;
   position: relative;
   box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
@@ -355,7 +355,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 9px; height: 100%;
+  width: 9.8%; height: 100%;
   background: linear-gradient(90deg,
     oklch(0.16 0.01 50), oklch(0.23 0.02 52), oklch(0.18 0.01 50));
   pointer-events: none;
@@ -376,8 +376,7 @@
 
 /* ===== AUDIOBOOK: square CD jewel-case ===== */
 .shelf-item.type-audiobook .item-cover {
-  width: 110px;
-  height: 110px;
+  aspect-ratio: 1 / 1;
   border-radius: 2px;
   position: relative;
   box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
@@ -388,8 +387,8 @@
 .shelf-item.type-audiobook .item-cover::before {
   content: '';
   position: absolute;
-  bottom: -20px; right: -20px;
-  width: 74px; height: 74px;
+  bottom: -18.2%; right: -18.2%;
+  width: 67.3%; height: 67.3%;
   border-radius: 50%;
   background:
     radial-gradient(circle at 50% 50%,
@@ -406,7 +405,7 @@
   content: '';
   position: absolute;
   top: 0; left: 0;
-  width: 8px; height: 100%;
+  width: 7.3%; height: 100%;
   background: linear-gradient(90deg,
     oklch(0.16 0.01 220), oklch(0.28 0.02 220), oklch(0.18 0.01 220));
   pointer-events: none;
@@ -421,6 +420,32 @@
     repeating-linear-gradient(1.5deg,
       oklch(0.18 0.02 48 / 0.06) 0px, transparent 1px, transparent 6px);
   box-shadow: inset -8px 0 18px oklch(0.10 0.02 48 / 0.35);
+}
+
+/* ===== Status glow borders ===== */
+.shelf-item.status-completed .item-cover,
+.shelf-item.status-completed .item-cover::before {
+  box-shadow: inset 0 0 0 2px oklch(0.60 0.18 150), 0 0 10px oklch(0.50 0.16 150 / 0.4);
+}
+
+.shelf-item.status-in-progress .item-cover,
+.shelf-item.status-in-progress .item-cover::before {
+  box-shadow: inset 0 0 0 2px oklch(0.58 0.16 250), 0 0 10px oklch(0.50 0.14 250 / 0.4);
+}
+
+.shelf-item.status-wishlist .item-cover,
+.shelf-item.status-wishlist .item-cover::before {
+  box-shadow: inset 0 0 0 2px oklch(0.60 0.14 330), 0 0 10px oklch(0.50 0.12 330 / 0.4);
+}
+
+.shelf-item.status-dropped .item-cover,
+.shelf-item.status-dropped .item-cover::before {
+  box-shadow: inset 0 0 0 2px oklch(0.50 0.12 25 / 0.7), 0 0 8px oklch(0.45 0.10 25 / 0.3);
+}
+
+.shelf-item.status-owned .item-cover,
+.shelf-item.status-owned .item-cover::before {
+  box-shadow: inset 0 0 0 2px oklch(0.55 0.08 80 / 0.5), 0 0 8px oklch(0.50 0.06 80 / 0.25);
 }
 
 /* ===== AUTH BACKGROUND ===== */
