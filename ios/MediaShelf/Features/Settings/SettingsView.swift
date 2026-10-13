@@ -1,8 +1,8 @@
 // SettingsView.swift
 // The Settings tab. Replaces frontend/src/pages/SettingsPage.tsx.
-// Plain Form, no design needed. Theme toggle is dropped on purpose: iOS
-// follows the system setting. Household admin lists users; editing roles is
-// on the not-done list.
+// Plain Form on the shelf background. Theme toggle is dropped on purpose:
+// iOS follows the system setting. Household admin lists users; editing roles
+// is on the not-done list.
 
 import SwiftUI
 
@@ -32,6 +32,7 @@ struct SettingsView: View {
                     }
                     .disabled(isSaving || !profileChanged)
                 }
+                .shelfRow()
 
                 Section {
                     TextField("Server URL", text: $serverURL)
@@ -48,34 +49,40 @@ struct SettingsView: View {
                 } footer: {
                     Text("Changing the server signs you out.")
                 }
+                .shelfRow()
 
                 if auth.user?.isAdmin == true {
                     Section("Household") {
                         if users.isEmpty {
-                            Text("Loading…").foregroundStyle(.secondary)
+                            Text("Loading…").foregroundStyle(Theme.mutedForeground)
                         }
                         ForEach(users) { u in
                             LabeledContent(u.displayName) {
-                                Text(u.role.capitalized).foregroundStyle(.secondary)
+                                Text(u.role.capitalized).foregroundStyle(Theme.mutedForeground)
                             }
                         }
                     }
+                    .shelfRow()
                 }
 
                 if let message {
-                    Section { Text(message).foregroundStyle(.secondary) }
+                    Section { Text(message).foregroundStyle(Theme.mutedForeground) }
+                        .shelfRow()
                 }
 
                 Section {
                     Button("Sign out", systemImage: "rectangle.portrait.and.arrow.right", role: .destructive) {
                         Task { await auth.signOut() }
                     }
+                    .accessibilityIdentifier("settings.signOut")
                 } footer: {
                     if let user = auth.user {
                         Text("Signed in as \(user.username) on \(ServerConfig.urlString)")
                     }
                 }
+                .shelfRow()
             }
+            .shelfBackground()
             .navigationTitle("Settings")
             .task { await load() }
         }

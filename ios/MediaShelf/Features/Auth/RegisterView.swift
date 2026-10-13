@@ -36,10 +36,13 @@ struct RegisterView: View {
                 } footer: {
                     Text("Registering on \(serverURL.isEmpty ? "your server" : serverURL).")
                 }
+                .shelfRow()
                 if let error = auth.lastError {
-                    Section { Text(error).foregroundStyle(.red) }
+                    Section { Text(error).foregroundStyle(Theme.glowDropped) }
+                        .shelfRow()
                 }
             }
+            .shelfBackground()
             .navigationTitle("Create Account")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

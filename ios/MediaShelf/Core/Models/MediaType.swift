@@ -71,8 +71,14 @@ enum MediaType: String, Codable, CaseIterable, Identifiable, Sendable {
         }
     }
 
-    /// Cover art aspect ratio. Records are square, everything else is a poster.
+    /// Cover art aspect ratio (width / height), matching the `.type-*`
+    /// rules in index.css: sleeves and jewel cases are square, books are a
+    /// trade paperback, movie cases are a little narrower.
     var coverAspect: CGFloat {
-        self == .vinyl ? 1 : 2 / 3
+        switch self {
+        case .vinyl, .audiobook: 1
+        case .book: 105 / 150
+        case .movie, .show, .documentary: 92 / 136
+        }
     }
 }

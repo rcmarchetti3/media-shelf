@@ -49,3 +49,58 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rcmarchetti.mediashelf
         SWIFT_EMIT_LOC_STRINGS: YES
+
+  # Swift Testing. Hosted in the app so it can @testable import MediaShelf
+  # and drive APIClient against MockServer. XcodeGen sets TEST_HOST and
+  # BUNDLE_LOADER from the dependency.
+  MediaShelfTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: MediaShelfTests
+    dependencies:
+      - target: MediaShelf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rcmarchetti.mediashelf.tests
+        GENERATE_INFOPLIST_FILE: YES
+
+  # XCUITest flows. Every test launches the app with --mock-server, so no
+  # real backend is involved. XcodeGen sets TEST_TARGET_NAME from the dependency.
+  MediaShelfUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: MediaShelfUITests
+    dependencies:
+      - target: MediaShelf
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rcmarchetti.mediashelf.uitests
+        GENERATE_INFOPLIST_FILE: YES
+
+schemes:
+  MediaShelf:
+    build:
+      targets:
+        MediaShelf: all
+        MediaShelfTests: [test]
+        MediaShelfUITests: [test]
+    run:
+      config: Debug
+      # Tick these in Edit Scheme > Run > Arguments to run against the
+      # in-process mock backend (account: tester / shelf-tester-2026).
+      commandLineArguments:
+        "--mock-server": false
+        "--mock-signed-in": false
+        "--mock-empty": false
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - MediaShelfTests
+        - MediaShelfUITests
+    profile:
+      config: Release
+    archive:
+      config: Release

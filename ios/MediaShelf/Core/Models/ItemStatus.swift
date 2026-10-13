@@ -1,7 +1,8 @@
 // ItemStatus.swift
 // Status values stored on a collection item. The backend stores a free string,
-// so unknown values decode as `.other`. Glow tints follow the semantics in the
-// brief: done is green, in progress is blue, wishlist is amber, dropped is red.
+// so unknown values decode as `.other`. Glow colors are the web's `.status-*`
+// rules: done is green, in progress is blue, wishlist is magenta, dropped is
+// red, owned is a faint brass.
 
 import SwiftUI
 
@@ -66,14 +67,20 @@ enum ItemStatus: Hashable, Sendable {
         }
     }
 
-    var tint: Color {
+    /// The ring and glow around the cover. Nil means no glow (unknown status).
+    var glow: Color? {
         switch self {
-        case .completed, .watched: .green
-        case .reading, .watching, .inProgress: .blue
-        case .owned: .secondary
-        case .wishlist, .wantToWatch: .orange
-        case .dropped: .red
-        case .other: .secondary
+        case .completed, .watched: Theme.glowCompleted
+        case .reading, .watching, .inProgress: Theme.glowInProgress
+        case .wishlist, .wantToWatch: Theme.glowWishlist
+        case .dropped: Theme.glowDropped.opacity(0.8)
+        case .owned: Theme.glowOwned.opacity(0.7)
+        case .other: nil
         }
+    }
+
+    /// Color for labels and icons that talk about this status.
+    var tint: Color {
+        glow ?? Theme.mutedForeground
     }
 }
