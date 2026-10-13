@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "change-me-to-a-random-256-bit-string"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    REGISTRATION_INVITE_CODE: str = ""
     DISCOGS_TOKEN: str = ""
     TMDB_API_KEY: str = ""
     GOOGLE_BOOKS_API_KEY: str = ""
