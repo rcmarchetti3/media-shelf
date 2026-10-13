@@ -1,9 +1,11 @@
+import secrets
 import uuid
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.user import User
@@ -34,8 +36,40 @@ def _make_tokens(user_id: uuid.UUID) -> TokenResponse:
     )
 
 
+def _require_invite(is_first_user: bool, invite_code: str | None) -> None:
+    """Gate registration once at least one account exists.
+
+    The first account is always allowed (it becomes admin). After that,
+    registration is refused unless REGISTRATION_INVITE_CODE is configured
+    and the request supplies a matching invite_code.
+    """
+    if is_first_user:
+        return
+
+    configured = settings.REGISTRATION_INVITE_CODE
+    if not configured:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Registration is closed",
+        )
+
+    if not invite_code or not secrets.compare_digest(invite_code, configured):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or missing invite code",
+        )
+
+
 @router.post("/register", response_model=TokenResponse, status_code=201)
 async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
+    # First user becomes admin; everyone after must pass the invite gate.
+    user_count = await db.execute(select(func.count(User.id)))
+    is_first_user = user_count.scalar() == 0
+
+    # Enforce the gate before the duplicate check so an un-invited request
+    # cannot probe which usernames or emails already exist.
+    _require_invite(is_first_user, data.invite_code)
+
     existing = await db.execute(
         select(User).where((User.username == data.username) | (User.email == data.email))
     )
@@ -44,10 +78,6 @@ async def register(data: UserCreate, db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT,
             detail="Username or email already taken",
         )
-
-    # First user becomes admin
-    user_count = await db.execute(select(func.count(User.id)))
-    is_first_user = user_count.scalar() == 0
 
     user = User(
         username=data.username,
