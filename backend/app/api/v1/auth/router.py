@@ -53,7 +53,7 @@ def _require_invite(is_first_user: bool, invite_code: str | None) -> None:
             detail="Registration is closed",
         )
 
-    if not invite_code or not secrets.compare_digest(invite_code, configured):
+    if not invite_code or not secrets.compare_digest(invite_code.encode(), configured.encode()):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid or missing invite code",
