@@ -73,7 +73,7 @@ struct MediaCover<Caption: View>: View {
     // MARK: Art
 
     private func art(width w: CGFloat, height h: CGFloat) -> some View {
-        AsyncImage(url: imageURL) { phase in
+        RemoteImage(url: imageURL) { phase in
             if case .success(let image) = phase {
                 image.resizable().scaledToFill()
             } else {

@@ -39,11 +39,8 @@ struct SettingsView: View {
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
-                        .onSubmit {
-                            guard serverURL != ServerConfig.urlString else { return }
-                            ServerConfig.urlString = serverURL
-                            Task { await auth.signOut() }
-                        }
+                        .onSubmit { switchServer(to: serverURL) }
+                    ServerPicker(url: $serverURL) { switchServer(to: $0) }
                 } header: {
                     Text("Server")
                 } footer: {
@@ -86,6 +83,14 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .task { await load() }
         }
+    }
+
+    /// A different server means a different account and different tokens,
+    /// so switching signs out.
+    private func switchServer(to url: String) {
+        guard url != ServerConfig.urlString else { return }
+        ServerConfig.urlString = url
+        Task { await auth.signOut() }
     }
 
     private var profileChanged: Bool {

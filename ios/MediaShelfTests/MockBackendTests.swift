@@ -184,6 +184,75 @@ struct APIClientAgainstMock {
         #expect(MockStore.shared.requestLog.contains("GET /covers/andor.png"))
     }
 
+    @Test("ImageLoader fetches a mock cover, caches it, and shares in-flight loads")
+    func imageLoader() async throws {
+        _ = freshClient()
+        let loader = ImageLoader()
+        let url = try #require(URL(string: MockFixtures.cover("rumours")))
+        #expect(loader.cached(url) == nil)
+
+        async let a = loader.load(url)
+        async let b = loader.load(url)
+        let (first, second) = try await (a, b)
+        #expect(first.size.width > 0)
+        #expect(second.size == first.size)
+        #expect(loader.cached(url) != nil)
+        #expect(MockStore.shared.requestLog.filter { $0 == "GET /covers/rumours.png" }.count == 1,
+                "Two concurrent loads should hit the server once")
+
+        let bad = try #require(URL(string: "\(MockServer.baseURLString)/api/v1/collection/stats"))
+        await #expect(throws: ImageLoader.LoadError.self) { try await loader.load(bad) }
+    }
+
+    @Test("Tunnel hostnames default to https, home addresses to http")
+    func schemeDefaults() {
+        let cases: [(String, String)] = [
+            ("shelf.marchettimedia.com", "https://shelf.marchettimedia.com/api/v1"),
+            ("shelf.marchettimedia.com/", "https://shelf.marchettimedia.com/api/v1"),
+            ("rj-server:8080", "http://rj-server:8080/api/v1"),
+            ("192.168.5.118:8080", "http://192.168.5.118:8080/api/v1"),
+            ("10.0.0.4", "http://10.0.0.4/api/v1"),
+            ("172.20.1.9", "http://172.20.1.9/api/v1"),
+            ("100.101.102.103:8080", "http://100.101.102.103:8080/api/v1"),
+            ("macmini.local", "http://macmini.local/api/v1"),
+            ("localhost:8080", "http://localhost:8080/api/v1"),
+            ("8.8.8.8", "https://8.8.8.8/api/v1"),
+            ("172.32.0.1", "https://172.32.0.1/api/v1"),
+            ("http://shelf.example.com", "http://shelf.example.com/api/v1"),
+        ]
+        for (input, expected) in cases {
+            #expect(ServerConfig.apiBaseURL(from: input)?.absoluteString == expected, "\(input)")
+        }
+        #expect(ServerConfig.apiBaseURL(from: "   ") == nil)
+    }
+
+    @Test("Saved servers round-trip, dedupe by address, and forget")
+    func savedServers() {
+        let original = ServerConfig.savedServers
+        defer { ServerConfig.savedServers = original }
+        ServerConfig.savedServers = []
+
+        ServerConfig.save(name: "Home", url: "rj-server:8080")
+        ServerConfig.save(name: "Tunnel", url: "shelf.marchettimedia.com")
+        #expect(ServerConfig.savedServers.map(\.name) == ["Home", "Tunnel"])
+
+        // Same address typed differently replaces, not duplicates.
+        ServerConfig.save(name: "Away", url: "https://shelf.marchettimedia.com/")
+        #expect(ServerConfig.savedServers.map(\.name) == ["Home", "Away"])
+        #expect(ServerConfig.savedServer(for: "shelf.marchettimedia.com/api/v1")?.name == "Away")
+
+        // A blank name falls back to a sensible default.
+        let unnamed = ServerConfig.save(name: "  ", url: "100.64.1.2")
+        #expect(unnamed?.name == "Home network")
+        #expect(ServerConfig.save(name: "x", url: "") == nil)
+
+        if let away = ServerConfig.savedServer(for: "shelf.marchettimedia.com") {
+            ServerConfig.remove(away)
+        }
+        #expect(ServerConfig.savedServer(for: "shelf.marchettimedia.com") == nil)
+        #expect(ServerConfig.savedServers.count == 2)
+    }
+
     @Test("Server URL normalization")
     func serverConfig() {
         ServerConfig.urlString = "rj-server:8080/"
@@ -262,6 +331,47 @@ struct ShelfModelAgainstMock {
         model.remove(id: original.id)
         #expect(!model.items.contains { $0.id == original.id })
         #expect(model.total == MockFixtures.items.count - 1)
+    }
+}
+
+@Suite(.serialized)
+@MainActor
+struct SearchModelAgainstMock {
+
+    @Test("Results already on the shelf are marked owned, new ones are not")
+    func ownedMarking() async {
+        let api = freshClient()
+        let model = SearchModel(api: api)
+        model.query = "fleetwood"
+        #expect(await eventually { model.results.count == 3 })
+
+        let rumours = model.results.first { $0.title == "Fleetwood Mac - Rumours" }
+        let tusk = model.results.first { $0.title == "Fleetwood Mac - Tusk" }
+        #expect(rumours.map(model.isOwned) == true, "Rumours is on the shelf (same Discogs id)")
+        #expect(tusk.map(model.isOwned) == false)
+
+        if let tusk {
+            await model.add(tusk)
+            #expect(model.isOwned(tusk))
+            #expect(model.addError == nil)
+        }
+    }
+
+    @Test("Audiobooks on the shelf count as owned for book results")
+    func sharedSourceOwnership() async {
+        let audiobook = PreviewData.item("Fire & Blood", .audiobook, status: "completed")
+        let owned = CollectionItem(
+            id: audiobook.id, userId: audiobook.userId, mediaType: .audiobook,
+            externalId: MockFixtures.searchResults.first { $0.title == "Fire & Blood" }?.externalId,
+            title: audiobook.title, imageUrl: nil, metadata: [:], rating: nil, status: "completed",
+            notes: nil, tags: [], isFavorite: false, addedAt: .now, updatedAt: .now, addedByName: nil)
+        let api = freshClient(items: [owned])
+        let model = SearchModel(api: api)
+        model.mediaType = .book
+        model.query = "fire"
+        #expect(await eventually { !model.results.isEmpty })
+        let fire = model.results.first { $0.title == "Fire & Blood" }
+        #expect(fire.map(model.isOwned) == true)
     }
 }
 

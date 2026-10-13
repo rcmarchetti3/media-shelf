@@ -261,8 +261,11 @@ final class MediaShelfUITests: XCTestCase {
         field.typeText("Rumours")
         let owned = app.buttons["search.result.Fleetwood Mac - Rumours"]
         assertExists(owned, "No Rumours result", in: app)
-        // The cover is a combined element; "On your shelf" is the check's label.
-        XCTAssertTrue(owned.label.contains("On your shelf"), "Got: \(owned.label)")
+        XCTAssertTrue(waitForValue(owned, "On your shelf"), "Got: \(String(describing: owned.value))")
+        let notOwned = app.buttons["search.result.Fleetwood Mac - Tusk"]
+        if notOwned.exists {
+            XCTAssertEqual(notOwned.value as? String, "Not on your shelf")
+        }
     }
 
     // MARK: Empty state and sign out

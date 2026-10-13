@@ -201,7 +201,7 @@ struct SpotlightCard: View {
     var body: some View {
         NavigationLink(value: item) {
             ZStack(alignment: .bottomLeading) {
-                AsyncImage(url: item.imageURL) { phase in
+                RemoteImage(url: item.imageURL) { phase in
                     if case .success(let image) = phase {
                         image.resizable().scaledToFill()
                             .blur(radius: 28)

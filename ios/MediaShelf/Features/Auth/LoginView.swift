@@ -29,6 +29,7 @@ struct LoginView: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .accessibilityIdentifier("login.server")
+                    ServerPicker(url: $serverURL)
                 }
                 .shelfRow()
                 Section("Account") {

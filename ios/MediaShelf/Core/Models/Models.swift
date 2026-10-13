@@ -22,6 +22,9 @@ struct RegisterRequest: Encodable, Sendable {
     let email: String
     let password: String
     let displayName: String
+    /// Only needed once the server has its first account. Omitted from the
+    /// JSON when nil.
+    var inviteCode: String? = nil
 }
 
 struct RefreshRequest: Encodable, Sendable {

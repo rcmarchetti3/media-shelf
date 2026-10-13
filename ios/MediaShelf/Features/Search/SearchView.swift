@@ -7,8 +7,8 @@
 //
 // Compact: tap a cover for a preview sheet with the Add button.
 // Regular: results on the left, the selected one's preview on the right.
-// The search field itself is the tab bar's (Tab role .search in AppTabView),
-// and the media type picker is the search scope bar.
+// The search field is pinned under the title so it is always visible, and
+// the media type picker is the search scope bar.
 
 import SwiftUI
 
@@ -25,7 +25,7 @@ struct SearchView: View {
                     resultsGrid
                 } detail: {
                     if let selected {
-                        SearchResultPreview(result: selected, isAdded: model.addedIDs.contains(selected.id)) {
+                        SearchResultPreview(result: selected, isAdded: model.isOwned(selected)) {
                             await model.add(selected)
                         }
                         .id(selected.id)
@@ -41,7 +41,7 @@ struct SearchView: View {
                 }
                 .sheet(item: $sheetResult) { result in
                     NavigationStack {
-                        SearchResultPreview(result: result, isAdded: model.addedIDs.contains(result.id)) {
+                        SearchResultPreview(result: result, isAdded: model.isOwned(result)) {
                             await model.add(result)
                         }
                         .toolbar {
@@ -56,11 +56,15 @@ struct SearchView: View {
         }
     }
 
-    /// `.searchable` has to sit on content inside the navigation container;
-    /// on the outer Group it never produces a field. Found by the UI tests.
+    /// `.searchable` has to sit on content inside the navigation container,
+    /// and the field is pinned (`.always`) so nobody has to hunt for it.
+    /// Both were found by the UI tests: on the outer Group, or left to the
+    /// `.search` tab role, no field rendered on iPhone Duo.
     private var resultsGrid: some View {
         searchResultsContent
-            .searchable(text: $model.query, prompt: "Search \(model.mediaType.label.lowercased())")
+            .searchable(text: $model.query,
+                        placement: .navigationBarDrawer(displayMode: .always),
+                        prompt: "Search \(model.mediaType.label.lowercased())")
             .searchScopes($model.mediaType, activation: .onSearchPresentation) {
                 ForEach(MediaType.allCases) { type in
                     Text(type.label).tag(type)
@@ -82,7 +86,7 @@ struct SearchView: View {
                 Button {
                     if sizeClass == .regular { selected = result } else { sheetResult = result }
                 } label: {
-                    SearchResultCover(result: result, isAdded: model.addedIDs.contains(result.id))
+                    SearchResultCover(result: result, isAdded: model.isOwned(result))
                 }
                 .buttonStyle(CoverButtonStyle())
                 .accessibilityIdentifier("search.result.\(result.title)")
@@ -157,10 +161,13 @@ struct SearchResultCover: View {
                     .foregroundStyle(Theme.onBrass, Theme.brass)
                     .shadow(color: .black.opacity(0.5), radius: 2)
                     .padding(5)
-                    .accessibilityLabel("On your shelf")
             }
         }
         .contentShape(Rectangle())
+        // One element: the title, and whether it's already on the shelf.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(result.title)
+        .accessibilityValue(isAdded ? "On your shelf" : "Not on your shelf")
     }
 }
 

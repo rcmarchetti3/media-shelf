@@ -157,7 +157,7 @@ struct ItemDetailView: View {
     /// The cover's own art, blurred and faded into the wall.
     private func backdrop(_ item: CollectionItem) -> some View {
         GeometryReader { geo in
-            AsyncImage(url: item.imageURL) { phase in
+            RemoteImage(url: item.imageURL) { phase in
                 if case .success(let image) = phase {
                     image.resizable().scaledToFill()
                         .frame(width: geo.size.width, height: geo.size.height)

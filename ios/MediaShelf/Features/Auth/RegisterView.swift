@@ -14,6 +14,7 @@ struct RegisterView: View {
     @State private var email = ""
     @State private var displayName = ""
     @State private var password = ""
+    @State private var inviteCode = ""
     @State private var isWorking = false
 
     var body: some View {
@@ -33,8 +34,12 @@ struct RegisterView: View {
                         .textContentType(.name)
                     SecureField("Password (6+ characters)", text: $password)
                         .textContentType(.newPassword)
+                    SecureField("Invite code (if the server needs one)", text: $inviteCode)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .accessibilityIdentifier("register.inviteCode")
                 } footer: {
-                    Text("Registering on \(serverURL.isEmpty ? "your server" : serverURL).")
+                    Text("Registering on \(serverURL.isEmpty ? "your server" : serverURL). The first account on a server needs no code. After that, ask whoever runs it for one.")
                 }
                 .shelfRow()
                 if let error = auth.lastError {
@@ -68,7 +73,8 @@ struct RegisterView: View {
         defer { isWorking = false }
         ServerConfig.urlString = serverURL
         await auth.register(RegisterRequest(
-            username: username, email: email, password: password, displayName: displayName))
+            username: username, email: email, password: password, displayName: displayName,
+            inviteCode: inviteCode.isEmpty ? nil : inviteCode))
         if auth.user != nil { dismiss() }
     }
 }

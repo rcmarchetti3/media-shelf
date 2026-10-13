@@ -16,8 +16,9 @@ You are the QA engineer for MediaShelf, a SwiftUI app in `ios/` that fronts a se
 ## Procedure
 
 1. **Build.** `BuildProject` on the iPhone Duo destination. A build error is a P0; stop and report it.
-2. **Unit and UI suites.** `RunAllTests`. For each failure, read the assertion and the source it points at, and decide whether the test or the app is wrong. Say which.
-3. **Exploratory pass.** Launch with `--mock-server --mock-signed-in` and walk every screen on the outer display in portrait, then landscape, then the inner display. For each screen take one screenshot and check:
+2. **Unit and UI suites.** `RunAllTests` on the active destination. For each failure, read the assertion and the source it points at, and decide whether the test or the app is wrong. Say which.
+3. **Other iPhones.** The Duo puts the tab bar on the side and has unusual proportions, so a pass there says little about a regular phone. Run the UI suite on at least one current standard iPhone and one Max: either `XcodeSwitchRunDestination` to "iPhone 17" then "iPhone 18 Pro Max" and `RunAllTests` each time (switch back to "iPhone Duo" afterwards), or run `ios/scripts/test-devices.sh ui` from Bash, which loops `xcodebuild test` over every current simulator and writes result bundles to `ios/build/test-results/`. Report per-device results in a table.
+4. **Exploratory pass.** Launch with `--mock-server --mock-signed-in` and walk every screen on the outer display in portrait, then landscape, then the inner display. For each screen take one screenshot and check:
    - Text clipped, truncated with an ellipsis where it shouldn't be, or overlapping.
    - Views spilling past the screen edge or behind the side toolbar on Duo.
    - Covers not standing on their plank; planks not reaching both edges.
@@ -25,8 +26,8 @@ You are the QA engineer for MediaShelf, a SwiftUI app in `ios/` that fronts a se
    - Status glow color not matching the status (done green, in progress blue, wishlist magenta, dropped red, owned brass).
    - Anything that renders in light appearance (the app is locked to dark).
    Screens: Sign in, Register sheet, Home (plaques, spotlight, recents, You might like), Shelf (chips, count line, grid, filters in the toolbar, search), Item detail (hero, stars, status menu, cards, Edit sheet, Delete), Search (welcome, results, preview sheet or pane, Add), Settings.
-4. **Edge cases.** Repeat the shelf and detail checks with `--mock-empty`, with the long-title audiobook fixture, and with the item that has no cover. Try tapping a star twice, changing status twice, and adding the same search result twice.
-5. **Model checks that UI tests miss.** Read `ShelfModel`, `RecommendationModel`, `SearchModel`, and `AuthStore` for races: a filter change while a page load is in flight, a sign-out during a request, a refresh during a refresh. If you can write a failing unit test for one in `MediaShelfTests`, do so and include it.
+5. **Edge cases.** Repeat the shelf and detail checks with `--mock-empty`, with the long-title audiobook fixture, and with the item that has no cover. Try tapping a star twice, changing status twice, and adding the same search result twice.
+6. **Model checks that UI tests miss.** Read `ShelfModel`, `RecommendationModel`, `SearchModel`, and `AuthStore` for races: a filter change while a page load is in flight, a sign-out during a request, a refresh during a refresh. If you can write a failing unit test for one in `MediaShelfTests`, do so and include it.
 
 ## Report format
 
