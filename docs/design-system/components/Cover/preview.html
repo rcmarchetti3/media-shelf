@@ -1,0 +1,42 @@
+<!-- @dsCard height=300 -->
+<style>
+  .cover { position: relative; width: 960px; height: 300px; overflow: hidden; background: var(--background); }
+  .cover svg { position: absolute; inset: 0; }
+  .brass { fill: var(--brass); }
+  .leather { fill: var(--leather); }
+  .plank { fill: var(--shelf-plank); }
+  .edge { fill: var(--shelf-dark); }
+  .parchment { fill: var(--parchment); }
+  .disc { fill: var(--shelf-dark); }
+  .groove { fill: none; stroke: var(--shelf-plank); stroke-width: 2; }
+  .label { fill: var(--shelf-light); }
+  .spine { rx: var(--radius-cover); ry: var(--radius-cover); }
+  .text { position: absolute; left: 48px; bottom: 48px; max-width: 440px; }
+  .name { margin: 0; font: 700 80px/0.95 var(--font-heading); letter-spacing: -0.025em; color: var(--brass); }
+  .tagline { margin: 16px 0 0; font: 400 14px/20px var(--font-sans); color: var(--muted-foreground); }
+</style>
+<div class="cover">
+  <svg viewBox="0 0 960 300" width="960" height="300" aria-hidden="true">
+    <!--
+      blocks: brass sleeve 152×152, leather spines 56×160 and 44×140, parchment spine 28×112, shelf-plank plank 480×24 + shelf-dark edge 480×8 (bleeds off the right edge)
+      arrangement: a single shelf — media objects standing on a plank, right of x=480, mirroring the logo mark and the app's shelf rows
+      pattern: literal motif (vinyl) — a shelf-dark disc with three shelf-plank grooves and a shelf-light label peeking up-right behind the brass sleeve, as .type-vinyl does
+      scales: radius-cover (2px) on every object; widths on space-* multiples (28 = 7×space-1, 56 = 14×space-1); 8px gaps (space-2)
+    -->
+    <circle class="disc" cx="826" cy="122" r="74"/>
+    <circle class="groove" cx="826" cy="122" r="60"/>
+    <circle class="groove" cx="826" cy="122" r="46"/>
+    <circle class="groove" cx="826" cy="122" r="30"/>
+    <circle class="label" cx="826" cy="122" r="12"/>
+    <rect class="leather spine" x="520" y="76" width="56" height="160"/>
+    <rect class="parchment spine" x="584" y="124" width="28" height="112"/>
+    <rect class="leather spine" x="620" y="96" width="44" height="140"/>
+    <rect class="brass spine" x="700" y="84" width="152" height="152"/>
+    <rect class="plank" x="496" y="236" width="464" height="24"/>
+    <rect class="edge" x="496" y="260" width="464" height="8"/>
+  </svg>
+  <div class="text">
+    <h1 class="name">MediaShelf</h1>
+    <p class="tagline">A walnut-and-brass home library for vinyl, books, film and TV.</p>
+  </div>
+</div>
