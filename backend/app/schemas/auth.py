@@ -9,6 +9,7 @@ class UserCreate(BaseModel):
     email: str = Field(min_length=5, max_length=255)
     password: str = Field(min_length=6, max_length=128)
     display_name: str = Field(min_length=1, max_length=100)
+    invite_code: str | None = Field(default=None, max_length=256)
 
 
 class UserLogin(BaseModel):
