@@ -40,18 +40,33 @@ for device in "${DEVICES[@]}"; do
   echo
   echo "=== $device ($MODE) ==="
   rm -rf "build/test-results/$slug.xcresult"
+  # Pass/fail comes from xcodebuild's own exit code. (Piping through grep made
+  # a quiet, successful run look like a failure because grep matched nothing.)
   if xcodebuild test \
       -project MediaShelf.xcodeproj \
       -scheme MediaShelf \
       -destination "platform=iOS Simulator,name=$device" \
+      -derivedDataPath build/DerivedData \
       -resultBundlePath "build/test-results/$slug.xcresult" \
       "${TARGET_FLAGS[@]}" \
-      -quiet 2>&1 | grep -E "Test (Case|Suite).*(passed|failed)|error:|\*\* TEST" ; then
-    echo "--- $device: passed"
+      -quiet > "build/test-results/$slug.log" 2>&1; then
+    outcome="passed"
   else
-    echo "--- $device: FAILED"
+    outcome="FAILED"
     FAILED+=("$device")
   fi
+  # One line of facts from the result bundle, whatever the exit code said.
+  xcrun xcresulttool get test-results summary --path "build/test-results/$slug.xcresult" 2>/dev/null \
+    | python3 -c "
+import json, sys
+try:
+    d = json.load(sys.stdin)
+    print('--- $device: $outcome | %s passed, %s failed, %s total' % (d.get('passedTests'), d.get('failedTests'), d.get('totalTestCount')))
+    for f in d.get('testFailures', [])[:8]:
+        print('    FAIL:', f.get('testName'), '|', (f.get('failureText') or '')[:140].replace(chr(10), ' '))
+except Exception:
+    print('--- $device: $outcome | no result bundle, see build/test-results/$slug.log')
+"
 done
 
 echo
