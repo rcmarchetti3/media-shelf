@@ -40,11 +40,18 @@ targets:
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
           - UIInterfaceOrientationPortraitUpsideDown
-        # The server is self-hosted and usually reached over Tailscale or a LAN
-        # address without TLS. This lets plain http through. If you front the
-        # API with https (Cloudflare tunnel, tailscale cert), delete this block.
+        # The server is self-hosted. Public hostnames (a Cloudflare tunnel) must
+        # use https. Plain http is allowed only for local-network hosts: bare
+        # names like rj-server, .local, and IP addresses. Anything else typed
+        # as http://something.example.com is refused by the system, on purpose.
         NSAppTransportSecurity:
-          NSAllowsArbitraryLoads: true
+          NSAllowsLocalNetworking: true
+        # Shown the first time the app talks to a server on the home network.
+        # Without it iOS can block LAN connections with no explanation.
+        NSLocalNetworkUsageDescription: MediaShelf connects to your own MediaShelf server on your home network to load and save your collection.
+        # Only standard HTTPS encryption, which is exempt. Stops App Store
+        # Connect from asking the export-compliance question on every upload.
+        ITSAppUsesNonExemptEncryption: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rcmarchetti.mediashelf
