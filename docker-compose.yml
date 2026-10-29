@@ -31,6 +31,26 @@ services:
       - mediashelf-net
     restart: unless-stopped
 
+  # Optional in-stack LLM for recommendations, off by default. Normally
+  # OLLAMA_URL points at a faster machine (e.g. a Mac running native Ollama).
+  # Start this one only with: docker compose --profile local-llm up -d
+  # CPU-only; capped so it can't starve the rest of the server. No published
+  # port: only the api reaches it.
+  ollama:
+    profiles: ["local-llm"]
+    image: ollama/ollama:0.40.4
+    volumes:
+      - mediashelf-ollama:/root/.ollama
+    environment:
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_KEEP_ALIVE: "5m"
+    cpus: 2
+    mem_limit: 6g  # 4g ran out once the 8K context was allocated
+    networks:
+      - mediashelf-net
+    restart: unless-stopped
+
   web:
     build:
       context: ./frontend
@@ -46,6 +66,7 @@ services:
 
 volumes:
   mediashelf-pgdata:
+  mediashelf-ollama:
 
 networks:
   mediashelf-net:

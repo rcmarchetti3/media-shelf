@@ -5,6 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShelfGrid } from "@/components/ShelfGrid";
+import { RecommendedShelf } from "@/components/RecommendedShelf";
 import type { CollectionItem, CollectionStats } from "@/lib/types";
 
 export function DashboardPage() {
@@ -111,6 +112,8 @@ export function DashboardPage() {
           <ShelfGrid items={recent} />
         )}
       </div>
+
+      {recent.length > 0 && <RecommendedShelf />}
     </div>
   );
 }
