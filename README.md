@@ -61,11 +61,64 @@ MediaShelf is a lightweight, Docker-based web app designed for small households 
 - **Collection Management** — Filter, sort, and browse by media type, status, rating, favorites, and tags
 - **Status Tracking** — Color-coded glow borders indicate item status at a glance (completed, in progress, wishlist, owned, dropped). Games get their own set: Playing, Want to Play, Beat, Dropped
 - **Responsive Shelf Layout** — Items fill the shelf width naturally, scaling from 2 columns on mobile to 6 on large monitors
+- **AI Recommendations** — Optional "Recommended for You" shelf built from what you rate highly and finish, using a local model (Ollama) or Claude. Mark picks as already seen or not interested and they shape the next run
 - **Household Support** — Multiple user accounts with admin/member roles; view each other's collections
 - **Invite-Only Sign-Up** — After the first (admin) account, new accounts need an invite code you set
 - **Dark Mode First** — Clean dark UI with light mode and system theme options
 - **Fully Self-Hosted** — Runs entirely on your own hardware via Docker Compose
 - **Mobile Friendly** — Responsive design that works on phones, tablets, and desktops
+
+---
+
+## AI Recommendations (optional)
+
+The dashboard can show a **Recommended for You** shelf. It's off until you point MediaShelf at a model.
+
+**How picks are made**
+1. Your top-rated, favorited and finished items in each media type become a taste profile.
+2. Candidates come from real catalogs only:
+   - TMDB's own recommendations for your favorite films and shows;
+   - model suggestions for music, books and games, kept only if they match a real Discogs, Google Books, IGDB or RAWG result.
+3. The model picks 10 and writes a one-line reason that names something in your library.
+
+The model can only choose from that list, so it can't recommend things that don't exist.
+
+**Using it**
+- Click a pick to see its description, the reason it was picked, and an **Add** button.
+- **Already seen it** or **Not interested** hides a pick for good. Both kinds are never recommended again and go on a "don't suggest" list. "Not interested" picks are also given to the model as things to steer away from. A toast offers **Undo**.
+
+**Refreshing**
+- Picks are saved and rebuilt about once a day (`RECOMMENDATIONS_REFRESH_HOURS`).
+- The app checks hourly. If the model's machine is asleep, it keeps the last picks and tries again later.
+- **Refresh** on the dashboard rebuilds on demand. A run takes roughly 30–60 seconds on a local model.
+
+### Option A: Ollama (free, runs on your own hardware)
+
+A Mac with Apple Silicon works well, because native Ollama uses the GPU. `gemma3:12b` gave the most specific reasons in testing, at about 30 seconds per run.
+
+```bash
+# On the machine that will run the model
+ollama pull gemma3:12b
+# Enable "Expose Ollama to the network" in Ollama's settings
+```
+
+```env
+OLLAMA_URL=http://<that-machine's-LAN-IP>:11434
+OLLAMA_MODEL=gemma3:12b
+```
+
+> Ollama has no authentication. Keep it on your LAN and never route it through a public tunnel.
+
+To run Ollama inside the stack instead, use `docker compose --profile local-llm up -d` and `OLLAMA_URL=http://ollama:11434`. It runs CPU-only there, so expect several minutes per run.
+
+### Option B: Claude (Anthropic API)
+
+```env
+AI_PROVIDER=claude
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+This uses Claude Opus 5.5 and costs roughly $0.05 per run.
 
 ---
 
@@ -101,6 +154,11 @@ Edit `.env` and set:
 | `IGDB_CLIENT_ID` / `IGDB_CLIENT_SECRET` | No | Twitch developer app credentials for IGDB game search (preferred: real box art) |
 | `RAWG_API_KEY` | No | RAWG API key for game search (used when IGDB isn't set up, or as a fallback) |
 | `REGISTRATION_INVITE_CODE` | For more than one account | Code new users must enter to sign up. Empty = sign-up closed once the first account exists. Generate with `openssl rand -base64 18` |
+| `OLLAMA_URL` | For AI picks | Ollama address, e.g. `http://192.168.1.20:11434`. Empty = AI recommendations off |
+| `OLLAMA_MODEL` | No | Ollama model to use (default: `gemma3:12b`) |
+| `AI_PROVIDER` | No | `ollama` (default) or `claude` |
+| `ANTHROPIC_API_KEY` | For Claude | Anthropic API key, used when `AI_PROVIDER=claude` |
+| `RECOMMENDATIONS_REFRESH_HOURS` | No | How old saved picks get before they're rebuilt (default: `24`) |
 | `CORS_ORIGINS` | For remote access | Comma-separated allowed origins (e.g. `https://shelf.yourdomain.com`) |
 | `WEB_PORT` | No | Port to expose the web UI (default: `8080`) |
 
@@ -127,12 +185,15 @@ The first user to register automatically becomes the **admin**.
 │   port 80    │     │  port 8000  │     │  port 5432   │
 └─────────────┘     └─────────────┘     └─────────────┘
                            │
-                    ┌──────┴──────┐
-                    │ External APIs│
-                    │ Discogs     │
-                    │ Google Books│
-                    │ TMDB        │
-                    └─────────────┘
+                 ┌─────────┴─────────┐
+                 │                   │
+          ┌──────┴──────┐     ┌──────┴──────┐
+          │External APIs│     │  AI model   │
+          │ Discogs     │     │ (optional)  │
+          │ Google Books│     │ Ollama  or  │
+          │ TMDB        │     │ Claude API  │
+          │ IGDB / RAWG │     └─────────────┘
+          └─────────────┘
 ```
 
 | Layer | Tech |
@@ -141,7 +202,7 @@ The first user to register automatically becomes the **admin**.
 | Backend | Python 3.12, FastAPI, SQLAlchemy 2.0 (async), Alembic |
 | Frontend | React 18, TypeScript, Vite, Tailwind CSS v4, Base UI |
 | Auth | JWT (access + refresh tokens), bcrypt password hashing |
-| Containers | Docker Compose — 3 services (db, api, web) |
+| Containers | Docker Compose — 3 services (db, api, web), plus an optional `ollama` profile |
 
 ---
 
@@ -221,6 +282,9 @@ When running locally, interactive API docs are available at:
 | `PATCH` | `/api/v1/collection/{id}` | Update item (rating, status, tags, etc.) |
 | `GET` | `/api/v1/search/{type}?q=` | Search external APIs |
 | `GET` | `/api/v1/collection/stats` | Collection stats by media type |
+| `GET` | `/api/v1/recommendations/` | Saved AI picks (minus owned and waved-off items) |
+| `POST` | `/api/v1/recommendations/refresh` | Rebuild picks in the background; poll `GET` until `refreshing` is false |
+| `POST` | `/api/v1/recommendations/feedback` | Mark a pick `seen` or `not_interested` (`DELETE` with the same IDs to undo) |
 
 ---
 
@@ -275,6 +339,24 @@ media-shelf/
 ### Google Books (Books, Audiobooks)
 
 No API key needed — the Google Books API is free for basic usage.
+
+### IGDB (Video Games, preferred)
+
+1. Sign in at the [Twitch Developer Console](https://dev.twitch.tv/console/apps) (enable two-factor auth on your Twitch account first)
+2. **Register Your Application** → any name, OAuth redirect `http://localhost`, category *Application Integration*, client type *Confidential*
+3. Copy the **Client ID** and a new **Client Secret** to `IGDB_CLIENT_ID` / `IGDB_CLIENT_SECRET`
+
+### RAWG (Video Games, fallback)
+
+1. Create an account at [RAWG](https://rawg.io/) and request a key at [rawg.io/apidocs](https://rawg.io/apidocs)
+2. Copy it to `RAWG_API_KEY`
+
+RAWG's terms require attribution, which the app shows wherever RAWG data appears.
+
+### Anthropic (optional, for Claude recommendations)
+
+1. Create a key in the [Anthropic Console](https://console.anthropic.com/) and add credit
+2. Set `ANTHROPIC_API_KEY` and `AI_PROVIDER=claude`
 
 ---
 
