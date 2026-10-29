@@ -13,6 +13,14 @@ class Settings(BaseSettings):
     IGDB_CLIENT_ID: str = ""
     IGDB_CLIENT_SECRET: str = ""
     RAWG_API_KEY: str = ""
+    # Empty OLLAMA_URL disables AI recommendations
+    OLLAMA_URL: str = ""
+    OLLAMA_MODEL: str = "gemma3:12b"
+    # Which model provider builds recommendations: "ollama" or "claude"
+    AI_PROVIDER: str = "ollama"
+    ANTHROPIC_API_KEY: str = ""
+    CLAUDE_MODEL: str = "claude-opus-5-5"
+    CLAUDE_EFFORT: str = "medium"
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost:8080"
 
     @property
