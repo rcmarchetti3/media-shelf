@@ -21,6 +21,7 @@ interface AuthContextValue {
     email: string;
     password: string;
     display_name: string;
+    invite_code?: string;
   }) => Promise<void>;
   logout: () => void;
 }
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string;
     password: string;
     display_name: string;
+    invite_code?: string;
   }) => {
     const tokens = await apiFetch<TokenResponse>("/auth/register", {
       method: "POST",
