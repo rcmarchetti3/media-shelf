@@ -1,3 +1,6 @@
+import asyncio
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -5,8 +8,17 @@ from sqlalchemy import text
 from app.api.v1.router import api_v1_router
 from app.config import settings
 from app.database import async_session
+from app.services.recommendation_store import refresh_loop
 
-app = FastAPI(title="MediaShelf", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    task = asyncio.create_task(refresh_loop())
+    yield
+    task.cancel()
+
+
+app = FastAPI(title="MediaShelf", version="1.0.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,

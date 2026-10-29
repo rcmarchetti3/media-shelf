@@ -81,6 +81,20 @@ export function getDefaultStatusForType(mediaType: string): string {
   }
 }
 
+/** The "don't have it yet" status for each type, used when adding a recommendation */
+export function getWantStatusForType(mediaType: string): string {
+  switch (mediaType) {
+    case "movie":
+    case "documentary":
+    case "show":
+      return "want_to_watch";
+    case "game":
+      return "want_to_play";
+    default:
+      return "wishlist";
+  }
+}
+
 /** All statuses across every type, for collection-wide filtering */
 export const ALL_STATUSES: StatusOption[] = [
   { value: "owned", label: "Owned" },

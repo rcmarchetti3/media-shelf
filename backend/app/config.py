@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     ANTHROPIC_API_KEY: str = ""
     CLAUDE_MODEL: str = "claude-opus-5-5"
     CLAUDE_EFFORT: str = "medium"
+    # Saved picks older than this are rebuilt by the hourly background check
+    RECOMMENDATIONS_REFRESH_HOURS: int = 24
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost:8080"
 
     @property

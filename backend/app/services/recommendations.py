@@ -263,7 +263,9 @@ async def build_recommendations(db: AsyncSession, user_id: uuid.UUID) -> dict:
         n = p.get("candidate")
         if isinstance(n, int) and 0 <= n < len(pool) and n not in used:
             used.add(n)
-            picks.append({**pool[n], "reason": p.get("reason", "").strip()})
+            # Small models like *italic* titles; the UI shows plain text
+            reason = p.get("reason", "").replace("*", "").strip()
+            picks.append({**pool[n], "reason": reason})
 
     return {
         "recommendations": picks,

@@ -95,3 +95,19 @@ export interface CustomField {
   media_types: string[];
   created_at: string;
 }
+
+/** A saved AI pick: a real catalog result plus the model's one-line reason. */
+export interface Recommendation extends SearchResult {
+  reason: string;
+  because: string | null; // the library title TMDB based a film/TV pick on
+}
+
+export interface RecommendationsResponse {
+  enabled: boolean;
+  refreshing: boolean;
+  recommendations: Recommendation[];
+  generated_at: string | null;
+  last_attempt_at: string | null;
+  last_error: string | null;
+  provider: string | null;
+}
