@@ -20,6 +20,42 @@ function timeAgo(iso: string): string {
   return `${Math.round(hours / 24)}d ago`;
 }
 
+type FeedbackKind = "seen" | "not_interested";
+
+function seenLabel(mediaType: string): string {
+  switch (mediaType) {
+    case "book":
+    case "audiobook":
+      return "Already read it";
+    case "game":
+      return "Already played it";
+    case "vinyl":
+      return "Already heard it";
+    default:
+      return "Already seen it";
+  }
+}
+
+// The details route knows these types; the rest come from the same catalog
+const DETAILS_TYPE: Record<string, string> = { audiobook: "book", documentary: "movie" };
+
+type Meta = Record<string, unknown>;
+
+/** Plain-text synopsis from whichever field the provider uses (Google Books sends HTML). */
+function describe(meta: Meta | undefined): string {
+  const raw = meta?.overview || meta?.description;
+  if (typeof raw !== "string" || !raw.trim()) return "";
+  return new DOMParser().parseFromString(raw, "text/html").body.textContent?.trim() ?? "";
+}
+
+/** Discogs has no synopsis, so vinyl gets a facts line instead. */
+function vinylFacts(meta: Meta | undefined): string {
+  if (!meta) return "";
+  const styles = [...((meta.genres as string[]) ?? []), ...((meta.styles as string[]) ?? [])];
+  const tracks = Array.isArray(meta.tracklist) ? `${meta.tracklist.length} tracks` : "";
+  return [styles.slice(0, 4).join(", "), meta.label as string, tracks].filter(Boolean).join(" · ");
+}
+
 function modelName(provider: string | null): string {
   // "ollama:gemma3:12b" -> "gemma3:12b"; "claude:claude-opus-5-5" -> "claude-opus-5-5"
   return provider ? provider.slice(provider.indexOf(":") + 1) : "AI";
@@ -29,6 +65,7 @@ export function RecommendedShelf() {
   const [data, setData] = useState<RecommendationsResponse | null>(null);
   const [selected, setSelected] = useState<ShelfRec | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [details, setDetails] = useState<{ id: string; meta: Meta } | null>(null);
 
   const load = useCallback(
     () =>
@@ -48,6 +85,17 @@ export function RecommendedShelf() {
     const timer = setInterval(load, POLL_MS);
     return () => clearInterval(timer);
   }, [data?.refreshing, load]);
+
+  // Fetch full details only when the saved pick has no description to show
+  useEffect(() => {
+    if (!selected) return;
+    const needsDetails = selected.media_type === "vinyl" || !describe(selected.metadata);
+    if (!needsDetails || details?.id === selected.id) return;
+    const type = DETAILS_TYPE[selected.media_type] ?? selected.media_type;
+    apiFetch<{ metadata: Meta }>(`/search/${type}/${encodeURIComponent(selected.external_id)}`)
+      .then((d) => setDetails({ id: selected.id, meta: d.metadata }))
+      .catch(() => {});
+  }, [selected, details?.id]);
 
   const refresh = async () => {
     try {
@@ -87,7 +135,41 @@ export function RecommendedShelf() {
     }
   };
 
+  const sendFeedback = async (rec: ShelfRec, kind: FeedbackKind) => {
+    const key = { media_type: rec.media_type, external_id: rec.external_id };
+    setSelected(null);
+    // Take it off the shelf right away; the server filters it from now on
+    setData((prev) => prev && {
+      ...prev,
+      recommendations: prev.recommendations.filter(
+        (r) => !(r.media_type === rec.media_type && r.external_id === rec.external_id)
+      ),
+    });
+    try {
+      await apiFetch("/recommendations/feedback", {
+        method: "POST",
+        body: JSON.stringify({ ...key, title: rec.title, kind }),
+      });
+      toast(`Won't recommend "${rec.title}" again`, {
+        action: {
+          label: "Undo",
+          onClick: () =>
+            apiFetch(`/recommendations/feedback?${new URLSearchParams(key)}`, { method: "DELETE" })
+              .then(load)
+              .catch(() => toast.error("Couldn't undo")),
+        },
+      });
+    } catch {
+      toast.error("Couldn't save that");
+      load();
+    }
+  };
+
   if (!data?.enabled) return null;
+
+  const detailMeta = selected && details?.id === selected.id ? details.meta : undefined;
+  const description = selected ? describe(selected.metadata) || describe(detailMeta) : "";
+  const facts = selected?.media_type === "vinyl" ? vinylFacts(detailMeta ?? selected.metadata) : "";
 
   const picks: ShelfRec[] = data.recommendations.map((r) => ({
     ...r,
@@ -160,14 +242,35 @@ export function RecommendedShelf() {
                     </Badge>
                     {selected.year && <Badge variant="secondary">{selected.year}</Badge>}
                   </div>
-                  {selected.reason && <p className="text-sm">{selected.reason}</p>}
+                  {facts && <p className="text-sm text-muted-foreground">{facts}</p>}
                 </div>
               </div>
-              <Button className="w-full" onClick={handleAdd} disabled={isAdding}>
-                {isAdding
-                  ? "Adding..."
-                  : `Add as ${getStatusLabel(getWantStatusForType(selected.media_type))}`}
-              </Button>
+              {selected.reason && (
+                <p className="border-l-2 border-primary pl-3 text-sm">
+                  <span className="font-medium text-primary">Why: </span>
+                  {selected.reason}
+                </p>
+              )}
+              {description && (
+                <p className="max-h-40 overflow-y-auto text-sm leading-relaxed text-muted-foreground">
+                  {description}
+                </p>
+              )}
+              <div className="space-y-2">
+                <Button className="w-full" onClick={handleAdd} disabled={isAdding}>
+                  {isAdding
+                    ? "Adding..."
+                    : `Add as ${getStatusLabel(getWantStatusForType(selected.media_type))}`}
+                </Button>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button variant="outline" onClick={() => sendFeedback(selected, "seen")}>
+                    {seenLabel(selected.media_type)}
+                  </Button>
+                  <Button variant="outline" onClick={() => sendFeedback(selected, "not_interested")}>
+                    Not interested
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </DialogContent>
