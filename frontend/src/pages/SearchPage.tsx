@@ -30,6 +30,7 @@ const MEDIA_TABS: { value: MediaType; label: string }[] = [
   { value: "book", label: "Books" },
   { value: "movie", label: "Movies" },
   { value: "show", label: "Shows" },
+  { value: "game", label: "Games" },
 ];
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -45,7 +46,7 @@ function useDebounce<T>(value: T, delay: number): T {
 function toSearchTab(type: string): MediaType {
   if (type === "documentary") return "movie";
   if (type === "audiobook") return "book";
-  if ((["vinyl", "book", "movie", "show"] as string[]).includes(type)) return type as MediaType;
+  if ((["vinyl", "book", "movie", "show", "game"] as string[]).includes(type)) return type as MediaType;
   return "vinyl";
 }
 
@@ -75,7 +76,8 @@ export function SearchPage() {
       const endpoint =
         tab === "book" ? "books" :
         tab === "vinyl" ? "vinyl" :
-        tab === "movie" ? "movies" : "shows";
+        tab === "movie" ? "movies" :
+        tab === "game" ? "games" : "shows";
       const data = await apiFetch<SearchResponse>(
         `/search/${endpoint}?q=${encodeURIComponent(debouncedQuery)}&page=${page}`
       );

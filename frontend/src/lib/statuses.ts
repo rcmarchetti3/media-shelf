@@ -4,7 +4,8 @@ export type MediaType =
   | "audiobook"
   | "movie"
   | "documentary"
-  | "show";
+  | "show"
+  | "game";
 
 export interface StatusOption {
   value: string;
@@ -35,6 +36,13 @@ const SHOW_STATUSES: StatusOption[] = [
   { value: "dropped", label: "Dropped" },
 ];
 
+const GAME_STATUSES: StatusOption[] = [
+  { value: "playing", label: "Playing" },
+  { value: "want_to_play", label: "Want to Play" },
+  { value: "beat", label: "Beat" },
+  { value: "dropped", label: "Dropped" },
+];
+
 export function getStatusesForType(mediaType: string): StatusOption[] {
   switch (mediaType) {
     case "vinyl":
@@ -47,6 +55,8 @@ export function getStatusesForType(mediaType: string): StatusOption[] {
       return MOVIE_STATUSES;
     case "show":
       return SHOW_STATUSES;
+    case "game":
+      return GAME_STATUSES;
     default:
       return VINYL_STATUSES;
   }
@@ -64,6 +74,8 @@ export function getDefaultStatusForType(mediaType: string): string {
       return "want_to_watch";
     case "show":
       return "want_to_watch";
+    case "game":
+      return "want_to_play";
     default:
       return "owned";
   }
@@ -80,6 +92,9 @@ export const ALL_STATUSES: StatusOption[] = [
   { value: "watched", label: "Watched" },
   { value: "want_to_watch", label: "Want to Watch" },
   { value: "watching", label: "Watching" },
+  { value: "playing", label: "Playing" },
+  { value: "want_to_play", label: "Want to Play" },
+  { value: "beat", label: "Beat" },
 ];
 
 /** Human-readable label for any status value */
@@ -92,14 +107,17 @@ export function getStatusIcon(status: string | null): string | null {
   switch (status) {
     case "completed":
     case "watched":
+    case "beat":
       return "✓";
     case "reading":
     case "watching":
+    case "playing":
       return "▶";
     case "owned":
       return "●";
     case "wishlist":
     case "want_to_watch":
+    case "want_to_play":
       return "♡";
     case "dropped":
       return "✕";

@@ -17,6 +17,7 @@ const MEDIA_TYPE_LABELS: Record<string, string> = {
   show: "TV Shows",
   documentary: "Documentaries",
   audiobook: "Audiobooks",
+  game: "Games",
 };
 
 /**

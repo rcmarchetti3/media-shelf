@@ -23,6 +23,7 @@ export const collectionNavItems: CollectionNavItem[] = [
   { type: "book", label: "Books", icon: "Book" },
   { type: "audiobook", label: "Audiobooks", icon: "Headphones" },
   { type: "documentary", label: "Documentaries", icon: "Documentary" },
+  { type: "game", label: "Games", icon: "Game" },
 ];
 
 export const bottomNavItems: NavItem[] = [
@@ -45,4 +46,5 @@ export const icons: Record<string, string> = {
     "M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z",
   Documentary:
     "M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
+  Game: "M6.75 8.25h10.5a4.5 4.5 0 014.5 4.5v.75a3.75 3.75 0 01-6.69 2.33l-.56-.7a1.5 1.5 0 00-1.17-.56h-2.66a1.5 1.5 0 00-1.17.56l-.56.7A3.75 3.75 0 012.25 13.5v-.75a4.5 4.5 0 014.5-4.5z M7.875 10.875v2.25 M6.75 12h2.25 M15.75 11.25h.008v.008h-.008z M17.25 12.75h.008v.008h-.008z",
 };

@@ -39,6 +39,8 @@ function getSearchEndpoint(mediaType: string): string {
       return "movies";
     case "show":
       return "shows";
+    case "game":
+      return "games";
     default:
       return "movies";
   }

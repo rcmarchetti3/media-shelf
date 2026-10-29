@@ -169,4 +169,5 @@ async def get_stats(
         "show": counts.get("show", 0),
         "documentary": counts.get("documentary", 0),
         "audiobook": counts.get("audiobook", 0),
+        "game": counts.get("game", 0),
     }

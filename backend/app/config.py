@@ -9,6 +9,9 @@ class Settings(BaseSettings):
     DISCOGS_TOKEN: str = ""
     TMDB_API_KEY: str = ""
     GOOGLE_BOOKS_API_KEY: str = ""
+    IGDB_CLIENT_ID: str = ""
+    IGDB_CLIENT_SECRET: str = ""
+    RAWG_API_KEY: str = ""
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000,http://localhost:8080"
 
     @property

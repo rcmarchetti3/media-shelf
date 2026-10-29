@@ -28,21 +28,25 @@ class BaseAPIClient(ABC):
             self._last_request_time = asyncio.get_event_loop().time()
 
     async def _request(
-        self, method: str, path: str, params: dict | None = None
+        self,
+        method: str,
+        path: str,
+        params: dict | None = None,
+        content: str | None = None,
     ) -> dict | list:
         await self._throttle()
 
         url = f"{self.base_url}{path}"
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.request(
-                method, url, params=params, headers=self.headers
+                method, url, params=params, content=content, headers=self.headers
             )
 
             if response.status_code == 429:
                 retry_after = int(response.headers.get("Retry-After", "2"))
                 await asyncio.sleep(retry_after)
                 response = await client.request(
-                    method, url, params=params, headers=self.headers
+                    method, url, params=params, content=content, headers=self.headers
                 )
 
             response.raise_for_status()
@@ -50,3 +54,6 @@ class BaseAPIClient(ABC):
 
     async def get(self, path: str, params: dict | None = None) -> dict | list:
         return await self._request("GET", path, params)
+
+    async def post(self, path: str, content: str) -> dict | list:
+        return await self._request("POST", path, content=content)
