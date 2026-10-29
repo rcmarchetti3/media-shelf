@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { SearchResult, SearchResponse, MediaType } from "@/lib/types";
 import { getStatusesForType, getDefaultStatusForType } from "@/lib/statuses";
+import { RawgCredit } from "@/components/RawgCredit";
 
 const MEDIA_TABS: { value: MediaType; label: string }[] = [
   { value: "vinyl", label: "Vinyl" },
@@ -217,6 +218,10 @@ export function SearchPage() {
                     </Card>
                   ))}
                 </div>
+
+                {results.some((r) => r.metadata?.source === "rawg") && (
+                  <RawgCredit className="pt-4 text-center" />
+                )}
 
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 pt-6">

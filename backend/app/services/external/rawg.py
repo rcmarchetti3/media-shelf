@@ -3,6 +3,15 @@ from app.config import settings
 from .base import BaseAPIClient
 
 PAGE_SIZE = 20
+MEDIA_PREFIX = "https://media.rawg.io/media/"
+
+
+def _resized(url: str | None, width: int = 640) -> str:
+    """Originals can be 4K (~800 KB); RAWG's CDN serves a resize at
+    /media/resize/<w>/-/... (~50 KB at 640px, plenty for a 2x shelf cover)."""
+    if not url or not url.startswith(MEDIA_PREFIX) or "/media/resize/" in url:
+        return url or ""
+    return f"{MEDIA_PREFIX}resize/{width}/-/{url[len(MEDIA_PREFIX):]}"
 
 
 class RAWGClient(BaseAPIClient):
@@ -35,7 +44,7 @@ class RAWGClient(BaseAPIClient):
             "title": item.get("name", ""),
             "subtitle": ", ".join(p for p in [year, ", ".join(platforms[:3])] if p),
             # RAWG has no box art — this is a landscape screenshot
-            "image_url": item.get("background_image") or "",
+            "image_url": _resized(item.get("background_image")),
             "media_type": "game",
             "year": year,
             "metadata": {
