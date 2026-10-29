@@ -25,6 +25,7 @@ export function RegisterPage() {
     password: "",
     confirmPassword: "",
     display_name: "",
+    invite_code: "",
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -44,6 +45,8 @@ export function RegisterPage() {
         email: form.email,
         password: form.password,
         display_name: form.display_name,
+        // Only the first account on a server can register without one
+        ...(form.invite_code.trim() && { invite_code: form.invite_code.trim() }),
       });
       toast.success("Account created!");
       navigate("/");
@@ -115,6 +118,20 @@ export function RegisterPage() {
                 required
                 minLength={8}
               />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invite_code">Invite Code</Label>
+              <Input
+                id="invite_code"
+                type="password"
+                autoComplete="off"
+                value={form.invite_code}
+                onChange={update("invite_code")}
+                aria-describedby="invite_code_hint"
+              />
+              <p id="invite_code_hint" className="text-sm text-muted-foreground">
+                Ask whoever runs this shelf for one.
+              </p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3">
