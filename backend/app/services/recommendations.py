@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.models.collection_item import CollectionItem
+from app.models.recommendation_feedback import RecommendationFeedback
 from app.services.external.claude import claude_client
 from app.services.external.discogs import discogs_client
 from app.services.external.googlebooks import googlebooks_client
@@ -29,6 +30,8 @@ TMDB_SEEDS_PER_TYPE = 3
 TMDB_RECS_PER_SEED = 4
 MAX_CANDIDATES = 40
 MAX_PICKS = 10
+# Most recent feedback titles put in prompts; older ones still filter, just silently
+FEEDBACK_IN_PROMPT = 20
 
 # How much a status says "I liked this", on top of the star rating
 STATUS_WEIGHT = {
@@ -85,6 +88,15 @@ def _profile_text(profile: dict[str, list[CollectionItem]]) -> str:
             stars = f" {item.rating}/5" if item.rating else ""
             lines.append(f"- [{media_type}] {item.title}{f' by {creator}' if creator else ''}{stars}")
     return "\n".join(lines)
+
+
+def _feedback_text(feedback: list[RecommendationFeedback]) -> str:
+    """Prompt section for past picks the user waved off (newest first)."""
+    passed = [f for f in feedback if f.kind == "not_interested"][:FEEDBACK_IN_PROMPT]
+    if not passed:
+        return ""
+    lines = "\n".join(f"- [{f.media_type}] {f.title}" for f in passed)
+    return f"\n\nThey passed on these earlier recommendations; lean away from close matches:\n{lines}"
 
 
 def _candidate_line(n: int, c: dict) -> str:
@@ -196,10 +208,22 @@ async def build_recommendations(db: AsyncSession, user_id: uuid.UUID) -> dict:
     items = list(
         (await db.execute(select(CollectionItem).where(CollectionItem.user_id == user_id))).scalars()
     )
+    feedback = list(
+        (
+            await db.execute(
+                select(RecommendationFeedback)
+                .where(RecommendationFeedback.user_id == user_id)
+                .order_by(RecommendationFeedback.created_at.desc())
+            )
+        ).scalars()
+    )
     profile = build_profile(items)
-    profile_text = _profile_text(profile)
+    # The dislikes ride along with the profile, so both model steps see them
+    profile_text = _profile_text(profile) + _feedback_text(feedback)
+    # Waved-off picks are excluded exactly like owned items
     owned_ids = {(i.media_type, i.external_id) for i in items if i.external_id}
-    owned_titles = {_norm(i.title) for i in items}
+    owned_ids |= {(f.media_type, f.external_id) for f in feedback}
+    owned_titles = {_norm(i.title) for i in items} | {_norm(f.title) for f in feedback}
     llm_stats = []
 
     # 1. Model suggests music/books/games, one type per call (asked for all at
@@ -207,6 +231,9 @@ async def build_recommendations(db: AsyncSession, user_id: uuid.UUID) -> dict:
     #    These go first so the candidate cap below can't crowd them out.
     candidates, suggested_count = [], 0
     for media_type in (t for t in SUGGESTABLE_TYPES if t in profile):
+        # Name what they've already seen or passed on, so suggestions aren't spent on it
+        known = [f.title for f in feedback if f.media_type == media_type][:FEEDBACK_IN_PROMPT]
+        avoid = f"\nDon't suggest these, they already know them: {'; '.join(known)}." if known else ""
         suggested, stats = await llm().chat_json(
             system=(
                 "You recommend media to a collector. Suggest real, well-known titles "
@@ -215,7 +242,7 @@ async def build_recommendations(db: AsyncSession, user_id: uuid.UUID) -> dict:
             user=(
                 f"Their favorites:\n{profile_text}\n\n"
                 f"Suggest {SUGGESTIONS_PER_TYPE} {SUGGEST_HINTS[media_type]}, "
-                "matched to the tastes above."
+                f"matched to the tastes above.{avoid}"
             ),
             schema=SUGGEST_SCHEMA,
         )

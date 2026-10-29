@@ -3,13 +3,16 @@ import asyncio
 import anthropic
 from fastapi import APIRouter, Depends, HTTPException
 from httpx import HTTPError
-from sqlalchemy import select
+from pydantic import BaseModel, Field
+from sqlalchemy import delete, select
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.models.collection_item import CollectionItem
 from app.models.recommendation import Recommendation
+from app.models.recommendation_feedback import RecommendationFeedback
 from app.models.user import User
 from app.services.external.claude import ClaudeRefused
 from app.services.external.ollama import OllamaUnavailable
@@ -34,20 +37,23 @@ async def get_recommendations(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """The saved picks, minus anything added to the library since they were built."""
+    """The saved picks, minus anything added to the library or waved off since they were built."""
     row = await db.get(Recommendation, current_user.id)
     items = row.items if row else []
     if items:
-        owned = set(
+        hidden = set(
             (
                 await db.execute(
-                    select(CollectionItem.media_type, CollectionItem.external_id).where(
-                        CollectionItem.user_id == current_user.id
+                    select(CollectionItem.media_type, CollectionItem.external_id)
+                    .where(CollectionItem.user_id == current_user.id)
+                    .union(
+                        select(RecommendationFeedback.media_type, RecommendationFeedback.external_id)
+                        .where(RecommendationFeedback.user_id == current_user.id)
                     )
                 )
             ).tuples()
         )
-        items = [i for i in items if (i["media_type"], i["external_id"]) not in owned]
+        items = [i for i in items if (i["media_type"], i["external_id"]) not in hidden]
     return {
         "enabled": llm().is_configured,
         "refreshing": is_refreshing(),
@@ -71,6 +77,49 @@ async def refresh_recommendations(current_user: User = Depends(get_current_user)
     _background.add(task)
     task.add_done_callback(_background.discard)
     return {"refreshing": True}
+
+
+class FeedbackIn(BaseModel):
+    media_type: str = Field(max_length=20)
+    external_id: str = Field(max_length=255)
+    title: str = Field(max_length=500)
+    kind: str = Field(pattern="^(seen|not_interested)$")
+
+
+@router.post("/feedback", status_code=204)
+async def add_feedback(
+    body: FeedbackIn,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Hide a pick for good: "seen" (already know it) or "not_interested".
+    Marking the same title again just changes its kind."""
+    stmt = insert(RecommendationFeedback).values(user_id=current_user.id, **body.model_dump())
+    await db.execute(
+        stmt.on_conflict_do_update(
+            constraint="uq_feedback_user_media_external",
+            set_={"kind": stmt.excluded.kind, "title": stmt.excluded.title},
+        )
+    )
+    await db.commit()
+
+
+@router.delete("/feedback", status_code=204)
+async def remove_feedback(
+    media_type: str,
+    external_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Undo: the pick shows up again (and can be recommended again)."""
+    await db.execute(
+        delete(RecommendationFeedback).where(
+            RecommendationFeedback.user_id == current_user.id,
+            RecommendationFeedback.media_type == media_type,
+            RecommendationFeedback.external_id == external_id,
+        )
+    )
+    await db.commit()
 
 
 @router.post("/preview")
