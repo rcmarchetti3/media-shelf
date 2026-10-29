@@ -5,6 +5,44 @@ from .base import BaseAPIClient
 IMAGE_BASE = "https://image.tmdb.org/t/p/w500"
 
 
+def _movie_result(item: dict) -> dict:
+    poster = item.get("poster_path", "")
+    return {
+        "external_id": str(item.get("id", "")),
+        "title": item.get("title", ""),
+        "subtitle": (item.get("release_date", ""))[:4],
+        "image_url": f"{IMAGE_BASE}{poster}" if poster else "",
+        "media_type": "movie",
+        "year": (item.get("release_date", ""))[:4],
+        "metadata": {
+            "tmdb_id": item.get("id"),
+            "overview": item.get("overview", ""),
+            "release_date": item.get("release_date", ""),
+            "vote_average": item.get("vote_average", 0),
+            "genre_ids": item.get("genre_ids", []),
+        },
+    }
+
+
+def _show_result(item: dict) -> dict:
+    poster = item.get("poster_path", "")
+    return {
+        "external_id": str(item.get("id", "")),
+        "title": item.get("name", ""),
+        "subtitle": (item.get("first_air_date", ""))[:4],
+        "image_url": f"{IMAGE_BASE}{poster}" if poster else "",
+        "media_type": "show",
+        "year": (item.get("first_air_date", ""))[:4],
+        "metadata": {
+            "tmdb_id": item.get("id"),
+            "overview": item.get("overview", ""),
+            "first_air_date": item.get("first_air_date", ""),
+            "vote_average": item.get("vote_average", 0),
+            "genre_ids": item.get("genre_ids", []),
+        },
+    }
+
+
 class TMDBClient(BaseAPIClient):
     def __init__(self):
         super().__init__(
@@ -28,26 +66,7 @@ class TMDBClient(BaseAPIClient):
             params=self._params({"query": query, "page": page}),
         )
 
-        results = []
-        for item in data.get("results", []):
-            poster = item.get("poster_path", "")
-            results.append(
-                {
-                    "external_id": str(item.get("id", "")),
-                    "title": item.get("title", ""),
-                    "subtitle": (item.get("release_date", ""))[:4],
-                    "image_url": f"{IMAGE_BASE}{poster}" if poster else "",
-                    "media_type": "movie",
-                    "year": (item.get("release_date", ""))[:4],
-                    "metadata": {
-                        "tmdb_id": item.get("id"),
-                        "overview": item.get("overview", ""),
-                        "release_date": item.get("release_date", ""),
-                        "vote_average": item.get("vote_average", 0),
-                        "genre_ids": item.get("genre_ids", []),
-                    },
-                }
-            )
+        results = [_movie_result(item) for item in data.get("results", [])]
 
         return {
             "results": results,
@@ -62,26 +81,7 @@ class TMDBClient(BaseAPIClient):
             params=self._params({"query": query, "page": page}),
         )
 
-        results = []
-        for item in data.get("results", []):
-            poster = item.get("poster_path", "")
-            results.append(
-                {
-                    "external_id": str(item.get("id", "")),
-                    "title": item.get("name", ""),
-                    "subtitle": (item.get("first_air_date", ""))[:4],
-                    "image_url": f"{IMAGE_BASE}{poster}" if poster else "",
-                    "media_type": "show",
-                    "year": (item.get("first_air_date", ""))[:4],
-                    "metadata": {
-                        "tmdb_id": item.get("id"),
-                        "overview": item.get("overview", ""),
-                        "first_air_date": item.get("first_air_date", ""),
-                        "vote_average": item.get("vote_average", 0),
-                        "genre_ids": item.get("genre_ids", []),
-                    },
-                }
-            )
+        results = [_show_result(item) for item in data.get("results", [])]
 
         return {
             "results": results,
@@ -89,6 +89,12 @@ class TMDBClient(BaseAPIClient):
             "page": data.get("page", 1),
             "total_pages": data.get("total_pages", 1),
         }
+
+    async def recommendations(self, media_type: str, tmdb_id: int | str) -> list[dict]:
+        """TMDB's own "people who liked this also liked" list for a movie or show."""
+        kind, to_result = ("movie", _movie_result) if media_type == "movie" else ("tv", _show_result)
+        data = await self.get(f"/{kind}/{tmdb_id}/recommendations", params=self._params())
+        return [to_result(item) for item in data.get("results", [])]
 
     async def get_movie(self, movie_id: str) -> dict:
         data = await self.get(

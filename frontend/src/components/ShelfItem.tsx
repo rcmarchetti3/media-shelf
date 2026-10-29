@@ -33,21 +33,21 @@ function getStatusClass(status: string | null): string {
   }
 }
 
+/** Anything that can sit on a shelf: a collection item, or a recommendation not owned yet. */
+export type ShelfEntry = Pick<CollectionItem, "id" | "title" | "image_url" | "media_type"> &
+  Partial<Pick<CollectionItem, "status" | "rating">>;
+
 type ShelfItemProps = {
-  item: CollectionItem;
+  item: ShelfEntry;
   onClick?: () => void;
+  /** When set, the item is a button (e.g. opens a dialog) instead of a link to its detail page. */
+  onSelect?: (item: ShelfEntry) => void;
 };
 
-export function ShelfItem({ item, onClick }: ShelfItemProps) {
-  const typeClass = `type-${item.media_type}`;
-  const statusClass = getStatusClass(item.status);
-
-  return (
-    <Link
-      to={`/collection/${item.id}`}
-      className={`shelf-item ${typeClass} ${statusClass}`}
-      onClick={onClick}
-    >
+export function ShelfItem({ item, onClick, onSelect }: ShelfItemProps) {
+  const className = `shelf-item type-${item.media_type} ${getStatusClass(item.status ?? null)}`;
+  const contents = (
+    <>
       <div className="item-cover">
         {item.image_url ? (
           <img src={item.image_url} alt={item.title} />
@@ -58,8 +58,21 @@ export function ShelfItem({ item, onClick }: ShelfItemProps) {
       <div className="item-info">
         <div className="item-title">{item.title}</div>
         <div className="item-meta capitalize">{item.media_type}</div>
-        {renderStars(item.rating)}
+        {renderStars(item.rating ?? null)}
       </div>
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <button type="button" className={`${className} text-left`} onClick={() => onSelect(item)}>
+        {contents}
+      </button>
+    );
+  }
+  return (
+    <Link to={`/collection/${item.id}`} className={className} onClick={onClick}>
+      {contents}
     </Link>
   );
 }
