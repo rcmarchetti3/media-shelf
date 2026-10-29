@@ -5,7 +5,7 @@
 <h1 align="center">MediaShelf</h1>
 
 <p align="center">
-  A self-hosted media cataloging app for tracking your vinyl records, books, movies, TV shows, audiobooks, and documentaries.
+  A self-hosted media cataloging app for tracking your vinyl records, books, movies, TV shows, audiobooks, documentaries, and video games.
 </p>
 
 <p align="center">
@@ -53,14 +53,16 @@ MediaShelf is a lightweight, Docker-based web app designed for small households 
 - **Movies & Documentaries** — powered by TMDB
 - **TV Shows** — powered by TMDB
 - **Audiobooks** — powered by Google Books
+- **Video Games** — powered by IGDB (box art) or RAWG, whichever you configure
 
 ### Key Features
 
 - **Search & Add** — Search external APIs and add items to your collection in one click
 - **Collection Management** — Filter, sort, and browse by media type, status, rating, favorites, and tags
-- **Status Tracking** — Color-coded glow borders indicate item status at a glance (completed, in progress, wishlist, owned, dropped)
+- **Status Tracking** — Color-coded glow borders indicate item status at a glance (completed, in progress, wishlist, owned, dropped). Games get their own set: Playing, Want to Play, Beat, Dropped
 - **Responsive Shelf Layout** — Items fill the shelf width naturally, scaling from 2 columns on mobile to 6 on large monitors
 - **Household Support** — Multiple user accounts with admin/member roles; view each other's collections
+- **Invite-Only Sign-Up** — After the first (admin) account, new accounts need an invite code you set
 - **Dark Mode First** — Clean dark UI with light mode and system theme options
 - **Fully Self-Hosted** — Runs entirely on your own hardware via Docker Compose
 - **Mobile Friendly** — Responsive design that works on phones, tablets, and desktops
@@ -95,6 +97,10 @@ Edit `.env` and set:
 | `SECRET_KEY` | Yes | Random string for JWT signing — generate with `openssl rand -hex 32` |
 | `DISCOGS_TOKEN` | No | Discogs personal access token for vinyl search |
 | `TMDB_API_KEY` | No | TMDB API key for movie/show/documentary search |
+| `GOOGLE_BOOKS_API_KEY` | No | Google Books API key for book/audiobook search |
+| `IGDB_CLIENT_ID` / `IGDB_CLIENT_SECRET` | No | Twitch developer app credentials for IGDB game search (preferred: real box art) |
+| `RAWG_API_KEY` | No | RAWG API key for game search (used when IGDB isn't set up, or as a fallback) |
+| `REGISTRATION_INVITE_CODE` | For more than one account | Code new users must enter to sign up. Empty = sign-up closed once the first account exists. Generate with `openssl rand -base64 18` |
 | `CORS_ORIGINS` | For remote access | Comma-separated allowed origins (e.g. `https://shelf.yourdomain.com`) |
 | `WEB_PORT` | No | Port to expose the web UI (default: `8080`) |
 
@@ -208,7 +214,7 @@ When running locally, interactive API docs are available at:
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/api/v1/auth/register` | Register a new user |
+| `POST` | `/api/v1/auth/register` | Register a new user (`invite_code` required after the first account) |
 | `POST` | `/api/v1/auth/login` | Log in and get tokens |
 | `GET` | `/api/v1/collection/` | List collection items (with filters) |
 | `POST` | `/api/v1/collection/` | Add item to collection |
@@ -227,7 +233,7 @@ media-shelf/
 │   │   ├── api/v1/          # Route handlers (auth, collection, search, users)
 │   │   ├── models/          # SQLAlchemy models
 │   │   ├── schemas/         # Pydantic request/response schemas
-│   │   ├── services/        # External API clients (Discogs, TMDB, Google Books)
+│   │   ├── services/        # External API clients (Discogs, TMDB, Google Books, IGDB, RAWG)
 │   │   ├── config.py        # Environment config
 │   │   ├── database.py      # Async DB engine & session
 │   │   ├── dependencies.py  # Auth dependencies
