@@ -411,6 +411,37 @@
   pointer-events: none;
 }
 
+/* ===== GAME: 3:4 keep-case, slim spine, rounded plastic edge ===== */
+.shelf-item.type-game .item-cover {
+  aspect-ratio: 3 / 4;
+  border-radius: 1px 3px 3px 1px;
+  position: relative;
+  box-shadow: 3px 0 10px oklch(0.10 0.02 50 / 0.55);
+  overflow: hidden;
+}
+
+/* Case spine — thinner than a film case */
+.shelf-item.type-game .item-cover::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 6.5%; height: 100%;
+  background: linear-gradient(90deg,
+    oklch(0.16 0.01 50), oklch(0.24 0.02 52), oklch(0.18 0.01 50));
+  pointer-events: none;
+}
+
+/* Plastic sheen plus the case's rounded right edge catching light */
+.shelf-item.type-game .item-cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, transparent 95%, oklch(0.95 0.01 80 / 0.10) 100%),
+    linear-gradient(180deg, oklch(0.95 0.01 80 / 0.07) 0%, transparent 35%);
+  pointer-events: none;
+}
+
 /* ===== SIDEBAR WOOD PANEL ===== */
 .sidebar-wood {
   background-color: var(--sidebar);

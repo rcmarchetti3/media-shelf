@@ -24,12 +24,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import type { SearchResult, SearchResponse, MediaType } from "@/lib/types";
 import { getStatusesForType, getDefaultStatusForType } from "@/lib/statuses";
+import { RawgCredit } from "@/components/RawgCredit";
 
 const MEDIA_TABS: { value: MediaType; label: string }[] = [
   { value: "vinyl", label: "Vinyl" },
   { value: "book", label: "Books" },
   { value: "movie", label: "Movies" },
   { value: "show", label: "Shows" },
+  { value: "game", label: "Games" },
 ];
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -45,7 +47,7 @@ function useDebounce<T>(value: T, delay: number): T {
 function toSearchTab(type: string): MediaType {
   if (type === "documentary") return "movie";
   if (type === "audiobook") return "book";
-  if ((["vinyl", "book", "movie", "show"] as string[]).includes(type)) return type as MediaType;
+  if ((["vinyl", "book", "movie", "show", "game"] as string[]).includes(type)) return type as MediaType;
   return "vinyl";
 }
 
@@ -75,7 +77,8 @@ export function SearchPage() {
       const endpoint =
         tab === "book" ? "books" :
         tab === "vinyl" ? "vinyl" :
-        tab === "movie" ? "movies" : "shows";
+        tab === "movie" ? "movies" :
+        tab === "game" ? "games" : "shows";
       const data = await apiFetch<SearchResponse>(
         `/search/${endpoint}?q=${encodeURIComponent(debouncedQuery)}&page=${page}`
       );
@@ -215,6 +218,10 @@ export function SearchPage() {
                     </Card>
                   ))}
                 </div>
+
+                {results.some((r) => r.metadata?.source === "rawg") && (
+                  <RawgCredit className="pt-4 text-center" />
+                )}
 
                 {totalPages > 1 && (
                   <div className="flex items-center justify-center gap-2 pt-6">

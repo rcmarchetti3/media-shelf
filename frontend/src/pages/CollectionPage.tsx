@@ -33,6 +33,7 @@ const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "show", label: "Shows" },
   { value: "documentary", label: "Documentaries" },
   { value: "audiobook", label: "Audiobooks" },
+  { value: "game", label: "Games" },
 ];
 
 // Prepend "All Statuses" option for collection-wide filter
@@ -187,6 +188,8 @@ export function CollectionPage() {
     if (item.media_type === "movie" || item.media_type === "documentary")
       return String(meta.genre ?? "");
     if (item.media_type === "show") return String(meta.genre ?? "");
+    if (item.media_type === "game")
+      return Array.isArray(meta.platforms) ? meta.platforms.join(", ") : "";
     return "";
   };
 

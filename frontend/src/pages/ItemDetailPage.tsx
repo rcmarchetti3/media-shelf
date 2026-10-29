@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import type { CollectionItem, SearchResult, SearchResponse } from "@/lib/types";
 import { getStatusesForType, getStatusLabel, SEASON_KEYS } from "@/lib/statuses";
+import { RawgCredit } from "@/components/RawgCredit";
 
 function getSearchEndpoint(mediaType: string): string {
   switch (mediaType) {
@@ -39,6 +40,8 @@ function getSearchEndpoint(mediaType: string): string {
       return "movies";
     case "show":
       return "shows";
+    case "game":
+      return "games";
     default:
       return "movies";
   }
@@ -416,6 +419,8 @@ export function ItemDetailPage() {
               ))}
             </dl>
           )}
+
+          {metadata.source === "rawg" && <RawgCredit />}
 
           {/* Notes (read-only) */}
           {!isEditing && item.notes && (

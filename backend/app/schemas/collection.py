@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 
 class CollectionItemCreate(BaseModel):
-    media_type: str = Field(pattern="^(vinyl|book|show|movie|documentary|audiobook)$")
+    media_type: str = Field(pattern="^(vinyl|book|show|movie|documentary|audiobook|game)$")
     external_id: str | None = None  # Optional for manually added items
     title: str = Field(max_length=500)
     image_url: str | None = None
@@ -63,3 +63,4 @@ class CollectionStatsResponse(BaseModel):
     show: int = 0
     documentary: int = 0
     audiobook: int = 0
+    game: int = 0

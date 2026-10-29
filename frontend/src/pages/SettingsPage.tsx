@@ -31,6 +31,7 @@ const ALL_MEDIA_TYPES = [
   { value: "show", label: "Shows" },
   { value: "documentary", label: "Documentaries" },
   { value: "audiobook", label: "Audiobooks" },
+  { value: "game", label: "Games" },
 ];
 
 export function SettingsPage() {

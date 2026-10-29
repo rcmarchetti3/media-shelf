@@ -20,7 +20,8 @@ export type MediaType =
   | "show"
   | "movie"
   | "documentary"
-  | "audiobook";
+  | "audiobook"
+  | "game";
 
 export type ItemStatus =
   | "completed"
@@ -64,6 +65,7 @@ export interface CollectionStats {
   show: number;
   documentary: number;
   audiobook: number;
+  game: number;
   [key: string]: number;
 }
 

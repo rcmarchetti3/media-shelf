@@ -14,12 +14,15 @@ function getStatusClass(status: string | null): string {
   switch (status) {
     case "completed":
     case "watched":
+    case "beat":
       return "status-completed";
     case "reading":
     case "watching":
+    case "playing":
       return "status-in-progress";
     case "wishlist":
     case "want_to_watch":
+    case "want_to_play":
       return "status-wishlist";
     case "dropped":
       return "status-dropped";
