@@ -61,6 +61,25 @@ function formatValue(value: unknown): string {
   return String(value ?? "");
 }
 
+/** Season numbers from metadata, tolerating junk from hand-edited fields */
+function readSeasons(value: unknown): number[] {
+  if (!Array.isArray(value)) return [];
+  return value.map(Number).filter((n) => Number.isInteger(n) && n > 0);
+}
+
+/**
+ * Status to suggest after the season checklist changes. Returning `current`
+ * leaves the status alone; the user can still override it before saving.
+ */
+function suggestShowStatus(current: string, watchedCount: number, totalSeasons: number): string {
+  // Dropping a show is a deliberate call; logging old seasons shouldn't undo it
+  if (current === "dropped" || watchedCount === 0) return current;
+  if (totalSeasons > 0 && watchedCount >= totalSeasons) return "completed";
+  // Partway through: a want-list or finished show is now in progress
+  if (current === "want_to_watch" || current === "completed" || current === "") return "watching";
+  return current;
+}
+
 export function ItemDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -81,6 +100,7 @@ export function ItemDetailPage() {
     current_season: "",
     total_seasons: "",
   });
+  const [seasonsWatched, setSeasonsWatched] = useState<number[]>([]);
 
   // Artwork / metadata search state
   const [manualUrl, setManualUrl] = useState("");
@@ -116,6 +136,7 @@ export function ItemDetailPage() {
       current_season: meta.current_season != null ? String(meta.current_season) : "",
       total_seasons: totalSeasons != null ? String(totalSeasons) : "",
     });
+    setSeasonsWatched(readSeasons(meta.seasons_watched));
     const vals: Record<string, string> = {};
     for (const [key, value] of Object.entries(meta)) {
       if (SEASON_KEYS.includes(key)) continue; // handled separately
@@ -174,6 +195,9 @@ export function ItemDetailPage() {
         const n = parseInt(seasonFields.total_seasons);
         if (!isNaN(n)) mergedMeta.total_seasons = n;
       }
+      if (seasonsWatched.length > 0) {
+        mergedMeta.seasons_watched = [...seasonsWatched].sort((a, b) => a - b);
+      }
 
       const updated = await apiFetch<CollectionItem>(`/collection/${id}`, {
         method: "PATCH",
@@ -201,6 +225,18 @@ export function ItemDetailPage() {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const toggleSeason = (season: number) => {
+    const total = parseInt(seasonFields.total_seasons) || 0;
+    const next = seasonsWatched.includes(season)
+      ? seasonsWatched.filter((s) => s !== season)
+      : [...seasonsWatched, season];
+    setSeasonsWatched(next);
+    setEditFields((prev) => ({
+      ...prev,
+      status: suggestShowStatus(prev.status, next.length, total),
+    }));
   };
 
   const handleDelete = async () => {
@@ -385,7 +421,12 @@ export function ItemDetailPage() {
                   {getStatusLabel(item.status)}
                 </Badge>
               )}
-              {item.media_type === "show" && (item.metadata?.current_season != null || item.metadata?.total_seasons != null) && (
+              {item.media_type === "show" && readSeasons(item.metadata?.seasons_watched).length > 0 ? (
+                <Badge variant="outline">
+                  {readSeasons(item.metadata.seasons_watched).length}
+                  {item.metadata.total_seasons ? ` of ${String(item.metadata.total_seasons)}` : ""} seasons watched
+                </Badge>
+              ) : item.media_type === "show" && (item.metadata?.current_season != null || item.metadata?.total_seasons != null) && (
                 <Badge variant="outline">
                   Season {String(item.metadata.current_season ?? "?")}
                   {item.metadata.total_seasons ? ` of ${String(item.metadata.total_seasons)}` : ""}
@@ -576,6 +617,33 @@ export function ItemDetailPage() {
                       setSeasonFields((prev) => ({ ...prev, total_seasons: e.target.value }))
                     }
                   />
+                </div>
+                <div className="col-span-2 space-y-2">
+                  <Label>Seasons Watched</Label>
+                  {parseInt(seasonFields.total_seasons) > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {Array.from({ length: Math.min(parseInt(seasonFields.total_seasons), 60) }, (_, i) => i + 1).map((n) => {
+                        const watched = seasonsWatched.includes(n);
+                        return (
+                          <Button
+                            key={n}
+                            type="button"
+                            size="sm"
+                            variant={watched ? "default" : "outline"}
+                            aria-pressed={watched}
+                            onClick={() => toggleSeason(n)}
+                            className="min-w-12"
+                          >
+                            {watched && "✓ "}S{n}
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Set Total Seasons to tick off the ones you've watched.
+                    </p>
+                  )}
                 </div>
               </div>
             )}

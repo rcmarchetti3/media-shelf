@@ -144,4 +144,4 @@ export function getStatusIcon(status: string | null): string | null {
 }
 
 /** Metadata keys reserved for the season UI — hidden from generic metadata fields */
-export const SEASON_KEYS = ["current_season", "total_seasons"];
+export const SEASON_KEYS = ["current_season", "total_seasons", "seasons_watched"];
