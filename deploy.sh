@@ -14,6 +14,7 @@ EXCLUDES=(
   # Local-only: Claude Code state/worktrees and Vite output (the image builds its own)
   --exclude='.claude'
   --exclude='frontend/dist'
+  --exclude='AGENTS.md'
 )
 
 echo "==> Pushing to GitHub..."
