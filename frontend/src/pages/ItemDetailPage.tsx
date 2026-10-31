@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { apiFetch } from "@/lib/api";
 import { usePageTitle } from "@/hooks/usePageTitle";
@@ -101,6 +101,9 @@ export function ItemDetailPage() {
     total_seasons: "",
   });
   const [seasonsWatched, setSeasonsWatched] = useState<number[]>([]);
+  // Live season count from TMDB; a ref too, so re-syncing the form keeps it
+  const [tmdbSeasons, setTmdbSeasons] = useState<number | null>(null);
+  const tmdbSeasonsRef = useRef<number | null>(null);
 
   // Artwork / metadata search state
   const [manualUrl, setManualUrl] = useState("");
@@ -129,12 +132,12 @@ export function ItemDetailPage() {
       is_favorite: data.is_favorite ?? false,
     });
     const meta = data.metadata ?? {};
-    // total_seasons may not be set for shows added before this feature;
-    // fall back to seasons_count (the raw TMDB field) if available.
-    const totalSeasons = meta.total_seasons ?? meta.seasons_count;
+    // Take whichever is higher: what's saved, or TMDB's count (new seasons air)
+    const stored = Number(meta.total_seasons ?? meta.seasons_count) || 0;
+    const totalSeasons = Math.max(stored, tmdbSeasonsRef.current ?? 0);
     setSeasonFields({
       current_season: meta.current_season != null ? String(meta.current_season) : "",
-      total_seasons: totalSeasons != null ? String(totalSeasons) : "",
+      total_seasons: totalSeasons > 0 ? String(totalSeasons) : "",
     });
     setSeasonsWatched(readSeasons(meta.seasons_watched));
     const vals: Record<string, string> = {};
@@ -151,6 +154,25 @@ export function ItemDetailPage() {
       .catch(() => navigate("/collection"))
       .finally(() => setIsLoading(false));
   }, [id, navigate, syncFromItem]);
+
+  // Shows: look up how many seasons exist so nobody has to type it in
+  const showLookupId =
+    item?.media_type === "show" ? String(item.metadata?.tmdb_id ?? item.external_id ?? "") : "";
+  useEffect(() => {
+    if (!showLookupId) return;
+    apiFetch<{ metadata: Record<string, unknown> }>(`/search/show/${encodeURIComponent(showLookupId)}`)
+      .then((d) => {
+        const n = Number(d.metadata?.seasons_count);
+        if (!Number.isInteger(n) || n <= 0) return;
+        tmdbSeasonsRef.current = n;
+        setTmdbSeasons(n);
+        setSeasonFields((prev) => ({
+          ...prev,
+          total_seasons: String(Math.max(parseInt(prev.total_seasons) || 0, n)),
+        }));
+      })
+      .catch(() => {}); // offline or no TMDB key: the manual field still works
+  }, [showLookupId]);
 
   const enterEditMode = () => {
     // Re-sync from current item state before editing
@@ -424,12 +446,12 @@ export function ItemDetailPage() {
               {item.media_type === "show" && readSeasons(item.metadata?.seasons_watched).length > 0 ? (
                 <Badge variant="outline">
                   {readSeasons(item.metadata.seasons_watched).length}
-                  {item.metadata.total_seasons ? ` of ${String(item.metadata.total_seasons)}` : ""} seasons watched
+                  {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""} seasons watched
                 </Badge>
-              ) : item.media_type === "show" && (item.metadata?.current_season != null || item.metadata?.total_seasons != null) && (
+              ) : item.media_type === "show" && (item.metadata?.current_season != null || seasonFields.total_seasons !== "") && (
                 <Badge variant="outline">
                   Season {String(item.metadata.current_season ?? "?")}
-                  {item.metadata.total_seasons ? ` of ${String(item.metadata.total_seasons)}` : ""}
+                  {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""}
                 </Badge>
               )}
               {item.rating && (
@@ -608,15 +630,22 @@ export function ItemDetailPage() {
                 </div>
                 <div className="space-y-2">
                   <Label>Total Seasons</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    placeholder="e.g. 5"
-                    value={seasonFields.total_seasons}
-                    onChange={(e) =>
-                      setSeasonFields((prev) => ({ ...prev, total_seasons: e.target.value }))
-                    }
-                  />
+                  {tmdbSeasons ? (
+                    <p className="flex h-9 items-center text-sm">
+                      {seasonFields.total_seasons}
+                      <span className="ml-1.5 text-muted-foreground">from TMDB</span>
+                    </p>
+                  ) : (
+                    <Input
+                      type="number"
+                      min={1}
+                      placeholder="e.g. 5"
+                      value={seasonFields.total_seasons}
+                      onChange={(e) =>
+                        setSeasonFields((prev) => ({ ...prev, total_seasons: e.target.value }))
+                      }
+                    />
+                  )}
                 </div>
                 <div className="col-span-2 space-y-2">
                   <Label>Seasons Watched</Label>
@@ -641,7 +670,7 @@ export function ItemDetailPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      Set Total Seasons to tick off the ones you've watched.
+                      Couldn't find a season count for this show. Set Total Seasons to tick off the ones you've watched.
                     </p>
                   )}
                 </div>
