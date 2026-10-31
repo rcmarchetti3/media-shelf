@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.collection_item import CollectionItem
@@ -45,7 +45,8 @@ async def get_items(
     db: AsyncSession,
     user_id: uuid.UUID,
     media_type: str | None = None,
-    status: str | None = None,
+    status: list[str] | None = None,
+    exclude_status: list[str] | None = None,
     is_favorite: bool | None = None,
     tags: list[str] | None = None,
     q: str | None = None,
@@ -64,8 +65,14 @@ async def get_items(
         count_query = count_query.where(CollectionItem.media_type == media_type)
 
     if status:
-        query = query.where(CollectionItem.status == status)
-        count_query = count_query.where(CollectionItem.status == status)
+        query = query.where(CollectionItem.status.in_(status))
+        count_query = count_query.where(CollectionItem.status.in_(status))
+
+    if exclude_status:
+        # NULL status counts as "not excluded"; a bare NOT IN would drop those rows
+        kept = or_(CollectionItem.status.is_(None), CollectionItem.status.not_in(exclude_status))
+        query = query.where(kept)
+        count_query = count_query.where(kept)
 
     if is_favorite is not None:
         query = query.where(CollectionItem.is_favorite == is_favorite)

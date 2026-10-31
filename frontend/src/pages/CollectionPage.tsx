@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { CollectionItem, PaginatedResponse } from "@/lib/types";
-import { ALL_STATUSES as STATUS_LIST, getStatusLabel } from "@/lib/statuses";
+import { ALL_STATUSES as STATUS_LIST, WANT_STATUSES, getStatusLabel } from "@/lib/statuses";
 
 const MEDIA_TYPES: { value: string; label: string }[] = [
   { value: "all", label: "All Types" },
@@ -48,12 +48,48 @@ const SORT_OPTIONS = [
   { value: "rating", label: "Rating" },
 ];
 
+export type CollectionSection = "collection" | "up-next";
+
+const SECTION_COPY: Record<CollectionSection, { title: string; blurb: string; empty: string }> = {
+  collection: {
+    title: "Collection",
+    blurb: "Browse and manage your media collection.",
+    empty: "No items found.",
+  },
+  "up-next": {
+    title: "Up Next",
+    blurb: "Everything you want to watch, play, read or pick up.",
+    empty: "Nothing on your list yet.",
+  },
+};
+
+/**
+ * Narrow a collection query to the items that belong in this section.
+ * `statusFilter` is the dropdown value ("all" or one status).
+ */
+function applyStatusScope(
+  params: URLSearchParams,
+  section: CollectionSection,
+  statusFilter: string
+): void {
+  if (statusFilter !== "all") {
+    // An explicit pick wins, so Collection can still surface want items on purpose
+    params.append("status", statusFilter);
+  } else if (section === "up-next") {
+    WANT_STATUSES.forEach((s) => params.append("status", s));
+  } else {
+    WANT_STATUSES.forEach((s) => params.append("exclude_status", s));
+  }
+}
+
 function findLabel(options: { value: string; label: string }[], value: string): string {
   return options.find((o) => o.value === value)?.label ?? value;
 }
 
 
-export function CollectionPage() {
+export function CollectionPage({ section = "collection" }: { section?: CollectionSection }) {
+  const copy = SECTION_COPY[section];
+  const scrollKey = `${section}-scroll`;
   const [searchParams, setSearchParams] = useSearchParams();
   const [items, setItems] = useState<CollectionItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +143,7 @@ export function CollectionPage() {
     params.set("sort_by", sortBy);
     params.set("sort_order", sortOrder);
     if (mediaType !== "all") params.set("media_type", mediaType);
-    if (statusFilter !== "all") params.set("status", statusFilter);
+    applyStatusScope(params, section, statusFilter);
     if (q) params.set("q", q);
     if (isFav) params.set("is_favorite", "true");
 
@@ -122,7 +158,7 @@ export function CollectionPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, mediaType, statusFilter, sortBy, sortOrder, q, isFav]);
+  }, [page, mediaType, statusFilter, sortBy, sortOrder, q, isFav, section]);
 
   useEffect(() => {
     fetchItems();
@@ -131,30 +167,30 @@ export function CollectionPage() {
   // Scroll restoration: restore after data loads
   useEffect(() => {
     if (!isLoading && items.length > 0) {
-      const saved = sessionStorage.getItem("collection-scroll");
+      const saved = sessionStorage.getItem(scrollKey);
       if (saved) {
         requestAnimationFrame(() => {
           window.scrollTo(0, parseInt(saved));
-          sessionStorage.removeItem("collection-scroll");
+          sessionStorage.removeItem(scrollKey);
         });
       }
     }
-  }, [isLoading, items.length]);
+  }, [isLoading, items.length, scrollKey]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    sessionStorage.removeItem("collection-scroll");
+    sessionStorage.removeItem(scrollKey);
     updateParams({ q: searchInput });
   };
 
   const handlePageChange = (newPage: number) => {
-    sessionStorage.removeItem("collection-scroll");
+    sessionStorage.removeItem(scrollKey);
     window.scrollTo(0, 0);
     updateParams({ page: String(newPage) }, false);
   };
 
   const updateFilter = (key: string, value: string | boolean | null) => {
-    sessionStorage.removeItem("collection-scroll");
+    sessionStorage.removeItem(scrollKey);
     const paramMap: Record<string, string> = {
       media_type: "type",
       status: "status",
@@ -167,7 +203,7 @@ export function CollectionPage() {
 
   // Save scroll position before navigating to an item
   const saveScroll = () => {
-    sessionStorage.setItem("collection-scroll", String(window.scrollY));
+    sessionStorage.setItem(scrollKey, String(window.scrollY));
   };
 
   const renderStars = (rating: number | null) => {
@@ -201,15 +237,18 @@ export function CollectionPage() {
     });
   };
 
-  const statuses = ALL_STATUSES;
+  const statuses =
+    section === "up-next"
+      ? ALL_STATUSES.filter((s) => s.value === "all" || WANT_STATUSES.includes(s.value))
+      : ALL_STATUSES;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Collection</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{copy.title}</h1>
           <p className="text-muted-foreground">
-            Browse and manage your media collection.
+            {copy.blurb}
           </p>
         </div>
         <Link to={`/search${mediaType !== "all" ? `?type=${mediaType}` : ""}`}>
@@ -378,7 +417,7 @@ export function CollectionPage() {
       ) : items.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-            <p className="text-muted-foreground">No items found.</p>
+            <p className="text-muted-foreground">{copy.empty}</p>
             <Link
               to={`/search${mediaType !== "all" ? `?type=${mediaType}` : ""}`}
               className="mt-2 text-sm text-primary hover:underline"

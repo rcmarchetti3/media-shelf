@@ -37,7 +37,8 @@ async def add_to_collection(
 @router.get("/", response_model=CollectionListResponse)
 async def list_collection(
     media_type: str | None = None,
-    item_status: str | None = Query(None, alias="status"),
+    item_status: list[str] | None = Query(None, alias="status"),
+    exclude_status: list[str] | None = Query(None),
     is_favorite: bool | None = None,
     tags: list[str] | None = Query(None),
     q: str | None = None,
@@ -53,6 +54,7 @@ async def list_collection(
         current_user.id,
         media_type=media_type,
         status=item_status,
+        exclude_status=exclude_status,
         is_favorite=is_favorite,
         tags=tags,
         q=q,

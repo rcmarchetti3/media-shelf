@@ -5,7 +5,7 @@ import { apiFetch } from "@/lib/api";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShelfGrid } from "@/components/ShelfGrid";
-import { RecommendedShelf } from "@/components/RecommendedShelf";
+import { WANT_STATUSES } from "@/lib/statuses";
 import type { CollectionItem, CollectionStats } from "@/lib/types";
 
 export function DashboardPage() {
@@ -18,7 +18,7 @@ export function DashboardPage() {
     Promise.all([
       apiFetch<CollectionStats>("/collection/stats"),
       apiFetch<{ items: CollectionItem[] }>(
-        "/collection/?sort_by=added_at&sort_order=desc&page_size=12"
+        `/collection/?sort_by=added_at&sort_order=desc&page_size=12&${WANT_STATUSES.map((s) => `exclude_status=${s}`).join("&")}`
       ),
     ])
       .then(([statsData, collectionData]) => {
@@ -112,8 +112,6 @@ export function DashboardPage() {
           <ShelfGrid items={recent} />
         )}
       </div>
-
-      {recent.length > 0 && <RecommendedShelf />}
     </div>
   );
 }

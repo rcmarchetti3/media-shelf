@@ -10,6 +10,7 @@ import { SearchPage } from "@/pages/SearchPage";
 import { CollectionPage } from "@/pages/CollectionPage";
 import { ItemDetailPage } from "@/pages/ItemDetailPage";
 import { SettingsPage } from "@/pages/SettingsPage";
+import { RecommendationsPage } from "@/pages/RecommendationsPage";
 
 function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -56,7 +57,9 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/search" element={<SearchPage />} />
-              <Route path="/collection" element={<CollectionPage />} />
+              <Route path="/collection" element={<CollectionPage key="collection" />} />
+              <Route path="/up-next" element={<CollectionPage key="up-next" section="up-next" />} />
+              <Route path="/recommendations" element={<RecommendationsPage />} />
               <Route path="/collection/:id" element={<ItemDetailPage />} />
               <Route path="/settings" element={<SettingsPage />} />
             </Route>

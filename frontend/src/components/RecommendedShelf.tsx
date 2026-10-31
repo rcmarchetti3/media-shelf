@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import { apiFetch, ApiError } from "@/lib/api";
 import { getStatusLabel, getWantStatusForType } from "@/lib/statuses";
@@ -61,7 +61,7 @@ function modelName(provider: string | null): string {
   return provider ? provider.slice(provider.indexOf(":") + 1) : "AI";
 }
 
-export function RecommendedShelf() {
+export function RecommendedShelf({ fallback = null }: { fallback?: ReactNode }) {
   const [data, setData] = useState<RecommendationsResponse | null>(null);
   const [selected, setSelected] = useState<ShelfRec | null>(null);
   const [isAdding, setIsAdding] = useState(false);
@@ -121,7 +121,7 @@ export function RecommendedShelf() {
           status: getWantStatusForType(selected.media_type),
         }),
       });
-      toast.success(`Added "${selected.title}" to your collection`);
+      toast.success(`Added "${selected.title}" to Up Next`);
       setSelected(null);
       load(); // the server drops picks you now own
     } catch (err) {
@@ -165,7 +165,8 @@ export function RecommendedShelf() {
     }
   };
 
-  if (!data?.enabled) return null;
+  if (!data) return null;
+  if (!data.enabled) return <>{fallback}</>;
 
   const detailMeta = selected && details?.id === selected.id ? details.meta : undefined;
   const description = selected ? describe(selected.metadata) || describe(detailMeta) : "";

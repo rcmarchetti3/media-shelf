@@ -95,6 +95,9 @@ export function getWantStatusForType(mediaType: string): string {
   }
 }
 
+/** Every "don't have it yet" status; these items live on Up Next, not in the Collection */
+export const WANT_STATUSES = ["want_to_watch", "want_to_play", "wishlist"];
+
 /** All statuses across every type, for collection-wide filtering */
 export const ALL_STATUSES: StatusOption[] = [
   { value: "owned", label: "Owned" },
