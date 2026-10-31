@@ -11,6 +11,9 @@ EXCLUDES=(
   --exclude='.venv'
   --exclude='*.pyc'
   --exclude='docker-compose.override.yml'
+  # Local-only: Claude Code state/worktrees and Vite output (the image builds its own)
+  --exclude='.claude'
+  --exclude='frontend/dist'
 )
 
 echo "==> Pushing to GitHub..."
