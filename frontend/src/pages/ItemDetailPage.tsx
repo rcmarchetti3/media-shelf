@@ -25,8 +25,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import type { CollectionItem, SearchResult, SearchResponse } from "@/lib/types";
-import { getStatusesForType, getStatusLabel, SEASON_KEYS } from "@/lib/statuses";
+import { getStatusesForType, getStatusIcon, getStatusLabel, SEASON_KEYS } from "@/lib/statuses";
 import { RawgCredit } from "@/components/RawgCredit";
+import { getStatusClass } from "@/components/ShelfItem";
 
 function getSearchEndpoint(mediaType: string): string {
   switch (mediaType) {
@@ -59,6 +60,54 @@ function formatValue(value: unknown): string {
   if (Array.isArray(value)) return value.join(", ");
   if (typeof value === "boolean") return value ? "Yes" : "No";
   return String(value ?? "");
+}
+
+/**
+ * The short "17 Feb 2022 · Drama · 2 seasons" line under the hero title.
+ * Each string becomes one part, joined with " · "; return [] to hide the line.
+ */
+function heroMetaLine(item: CollectionItem): string[] {
+  const m = item.metadata ?? {};
+  const year = (v: unknown) => String(v ?? "").slice(0, 4);
+  // At most two genres, so the line stays on one row on a phone. A genre that
+  // just names the media type ("Documentary") repeats the overline, so it's dropped.
+  const genres = (v: unknown) =>
+    (Array.isArray(v) ? v.map(String) : String(v ?? "").split(","))
+      .map((g) => g.trim())
+      .filter((g) => g && g.toLowerCase() !== item.media_type)
+      .slice(0, 2)
+      .join(", ");
+
+  let parts: string[];
+  switch (item.media_type) {
+    case "movie":
+      parts = [year(m.release_date), genres(m.genre)];
+      break;
+    case "show": {
+      const seasons = Number(m.total_seasons);
+      parts = [
+        year(m.first_air_date),
+        genres(m.genre),
+        seasons > 0 ? `${seasons} ${seasons === 1 ? "season" : "seasons"}` : "",
+      ];
+      break;
+    }
+    case "book":
+    case "audiobook":
+      // Author leads, the way a jacket reads
+      parts = [formatValue(m.authors), year(m.publish_year)];
+      break;
+    case "documentary":
+      parts = [genres(m.genre)];
+      break;
+    case "vinyl":
+      parts = [formatValue(m.label), genres(m.genres)];
+      break;
+    default:
+      parts = [genres(m.genre)];
+  }
+  // TMDB's vote_average is left out on purpose: your own stars sit right below
+  return parts.filter(Boolean);
 }
 
 /** Season numbers from metadata, tolerating junk from hand-edited fields */
@@ -378,20 +427,25 @@ export function ItemDetailPage() {
   const metaKeys = Object.keys(isEditing ? metaValues : metadata).filter((k) => !SEASON_KEYS.includes(k));
   const renderStars = (count: number) =>
     "★".repeat(count) + "☆".repeat(5 - count);
+  const metaLine = heroMetaLine(item);
+  const statusIcon = getStatusIcon(item.status);
+  const watchedSeasons = readSeasons(metadata.seasons_watched);
+  // The overview leads the details panel as prose, so it skips the field grid
+  const overview = typeof metadata.overview === "string" ? metadata.overview : "";
+  const detailKeys = metaKeys.filter((k) => k !== "overview" && formatValue(metadata[k]).trim() !== "");
+  const hasDetails = overview || detailKeys.length > 0 || item.notes || (item.tags?.length ?? 0) > 0;
 
   return (
-    <div className="space-y-6">
-      <section
-        className="cover-hero -mx-4 -mt-4 space-y-6 px-4 pt-4 pb-6 md:-mx-6 md:-mt-6 md:px-6 md:pt-6"
-        data-backdrop={item.image_url ? "" : undefined}
-      >
-        {item.image_url && (
-          <div
-            aria-hidden
-            className="cover-hero-backdrop"
-            style={{ backgroundImage: `url(${JSON.stringify(item.image_url)})` }}
-          />
-        )}
+    <div className="item-page -mx-4 -mt-4 md:-mx-6 md:-mt-6" data-backdrop={item.image_url ? "" : undefined}>
+      {item.image_url && (
+        <div
+          aria-hidden
+          className="item-page-backdrop"
+          style={{ backgroundImage: `url(${JSON.stringify(item.image_url)})` }}
+        />
+      )}
+      <div className="space-y-6 px-4 pt-4 pb-10 md:px-6 md:pt-6">
+      <section className="item-hero flex flex-col gap-8">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
             <svg
@@ -411,117 +465,64 @@ export function ItemDetailPage() {
           </Button>
         </div>
 
-        <div className="flex flex-col gap-6 md:flex-row">
-          {/* Artwork */}
-          <div className="shrink-0">
-            <button
-              onClick={openArtworkDialog}
-              className="group relative h-64 w-44 overflow-hidden rounded-sm bg-muted flex items-center justify-center cursor-pointer transition-all"
-              style={{border: "6px solid oklch(0.35 0.05 55)", boxShadow: "0 4px 14px oklch(0.10 0.02 50 / 0.45), inset 0 0 0 1px oklch(0.45 0.05 60 / 0.25)"}}
-              title="Edit artwork"
-            >
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
+          {/* The item as its physical object, with its status glow, like on the shelf */}
+          <button
+            type="button"
+            onClick={openArtworkDialog}
+            className={`hero-object shelf-item type-${item.media_type} ${getStatusClass(item.status)} w-40 shrink-0 md:w-52`}
+            title="Edit artwork"
+          >
+            <div className="item-cover">
               {item.image_url ? (
-                <img
-                  src={item.image_url}
-                  alt={item.title}
-                  className="h-full w-full object-cover"
-                />
+                <img src={item.image_url} alt={item.title} />
               ) : (
-                <span className="text-5xl text-muted-foreground">
-                  {item.title[0]}
+                item.title[0]
+              )}
+              <span className="hero-object-hint">Edit artwork</span>
+            </div>
+          </button>
+
+          <div className="min-w-0 flex-1 space-y-3">
+            <p className="hero-overline">{item.media_type}</p>
+            <h1 className="text-4xl font-bold tracking-tight text-balance md:text-5xl">
+              {item.title}
+            </h1>
+            {metaLine.length > 0 && (
+              <p className="hero-meta">{metaLine.join(" · ")}</p>
+            )}
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              {item.status && (
+                <span className="glass-pill">
+                  {statusIcon && <span aria-hidden>{statusIcon}</span>}
+                  {getStatusLabel(item.status)}
                 </span>
               )}
-              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <span className="text-white text-sm font-medium">
-                  Edit Artwork
+              {item.media_type === "show" && watchedSeasons.length > 0 ? (
+                <span className="glass-pill">
+                  {watchedSeasons.length}
+                  {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""} seasons watched
                 </span>
-              </div>
-            </button>
-          </div>
-
-          {/* Title + badges */}
-          <div className="flex-1 space-y-4">
-            <div>
-              <h1 className="text-2xl font-bold">{item.title}</h1>
-              <div className="mt-1 flex flex-wrap items-center gap-2">
-                <Badge variant="outline" className="capitalize">
-                  {item.media_type}
-                </Badge>
-                {item.is_favorite && (
-                  <Badge variant="secondary">★ Favorite</Badge>
-                )}
-                {item.status && (
-                  <Badge variant="secondary" className="capitalize">
-                    {getStatusLabel(item.status)}
-                  </Badge>
-                )}
-                {item.media_type === "show" && readSeasons(item.metadata?.seasons_watched).length > 0 ? (
-                  <Badge variant="outline">
-                    {readSeasons(item.metadata.seasons_watched).length}
-                    {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""} seasons watched
-                  </Badge>
-                ) : item.media_type === "show" && (item.metadata?.current_season != null || seasonFields.total_seasons !== "") && (
-                  <Badge variant="outline">
-                    Season {String(item.metadata.current_season ?? "?")}
-                    {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""}
-                  </Badge>
-                )}
-                {item.rating && (
-                  <span className="text-sm text-yellow-500">
-                    {renderStars(item.rating)}
-                  </span>
-                )}
-              </div>
-              {item.added_by_name && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Added by {item.added_by_name}
-                </p>
+              ) : item.media_type === "show" && (metadata.current_season != null || seasonFields.total_seasons !== "") && (
+                <span className="glass-pill">
+                  Season {String(metadata.current_season ?? "?")}
+                  {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""}
+                </span>
+              )}
+              {item.is_favorite && <span className="glass-pill">★ Favorite</span>}
+              {item.rating && (
+                <span className="px-1 text-primary" aria-label={`${item.rating} of 5 stars`}>
+                  {renderStars(item.rating)}
+                </span>
               )}
             </div>
 
-            {/* Read-only metadata summary (visible when not editing) */}
-            {!isEditing && metaKeys.length > 0 && (
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-                {metaKeys.map((key) => (
-                  <div key={key}>
-                    <dt className="text-muted-foreground">
-                      {formatKey(key)}
-                    </dt>
-                    <dd className="font-medium">
-                      {formatValue(metadata[key])}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-            )}
-
-            {metadata.source === "rawg" && <RawgCredit />}
-
-            {/* Notes (read-only) */}
-            {!isEditing && item.notes && (
-              <div className="text-sm">
-                <p className="text-muted-foreground">Notes</p>
-                <p className="mt-0.5 whitespace-pre-wrap">{item.notes}</p>
-              </div>
-            )}
-
-            {/* Tags (read-only) */}
-            {!isEditing && item.tags && item.tags.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {item.tags.map((tag) => (
-                  <Badge key={tag} variant="outline" className="text-xs">
-                    {tag}
-                  </Badge>
-                ))}
-              </div>
-            )}
-
-            {/* Edit button (view mode) */}
             {!isEditing && (
-              <div className="flex gap-2 pt-2">
-                <Button variant="outline" size="sm" onClick={enterEditMode}>
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <button type="button" className="glass-pill glass-pill-action" onClick={enterEditMode}>
                   <svg
-                    className="mr-1.5 h-3.5 w-3.5"
+                    className="h-3.5 w-3.5"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -534,20 +535,73 @@ export function ItemDetailPage() {
                     />
                   </svg>
                   Edit
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-destructive hover:text-destructive"
-                  onClick={() => setShowDelete(true)}
-                >
+                </button>
+                {/* Foreground, not destructive: small red text can't hold contrast over the art */}
+                <button type="button" className="glass-pill glass-pill-action" onClick={() => setShowDelete(true)}>
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"
+                    />
+                  </svg>
                   Remove
-                </Button>
+                </button>
               </div>
+            )}
+            {item.added_by_name && (
+              <p className="text-xs text-muted-foreground">
+                Added by {item.added_by_name}
+              </p>
             )}
           </div>
         </div>
       </section>
+
+      {/* ─── Details (view mode) ─── */}
+      {!isEditing && hasDetails && (
+        <section className="glass-panel space-y-5 p-4 md:p-6">
+          {overview && (
+            <p className="max-w-prose text-sm leading-relaxed md:text-base">{overview}</p>
+          )}
+
+          {detailKeys.length > 0 && (
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+              {detailKeys.map((key) => (
+                <div key={key}>
+                  <dt className="glass-label">{formatKey(key)}</dt>
+                  <dd className="font-medium">{formatValue(metadata[key])}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+
+          {item.notes && (
+            <div className="text-sm">
+              <p className="glass-label">Notes</p>
+              <p className="mt-0.5 whitespace-pre-wrap">{item.notes}</p>
+            </div>
+          )}
+
+          {item.tags && item.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {item.tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+
+      {metadata.source === "rawg" && <RawgCredit />}
 
       {/* ─── Edit Mode ─── */}
       {isEditing && (
@@ -956,6 +1010,7 @@ export function ItemDetailPage() {
           </Tabs>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

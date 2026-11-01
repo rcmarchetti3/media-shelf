@@ -10,7 +10,7 @@ function renderStars(rating: number | null) {
   );
 }
 
-function getStatusClass(status: string | null): string {
+export function getStatusClass(status: string | null): string {
   switch (status) {
     case "completed":
     case "watched":
