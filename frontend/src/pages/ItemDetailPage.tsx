@@ -374,167 +374,180 @@ export function ItemDetailPage() {
   if (!item) return null;
 
   const metadata = item.metadata ?? {};
-  const metaKeys = Object.keys(isEditing ? metaValues : metadata);
+  // Season fields have their own badge and checklist, so keep them out of the generic list
+  const metaKeys = Object.keys(isEditing ? metaValues : metadata).filter((k) => !SEASON_KEYS.includes(k));
   const renderStars = (count: number) =>
     "★".repeat(count) + "☆".repeat(5 - count);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
-          <svg
-            className="mr-1 h-4 w-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={1.5}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15.75 19.5L8.25 12l7.5-7.5"
-            />
-          </svg>
-          Back
-        </Button>
-      </div>
-
-      <div className="flex flex-col gap-6 md:flex-row">
-        {/* Artwork */}
-        <div className="shrink-0">
-          <button
-            onClick={openArtworkDialog}
-            className="group relative h-64 w-44 overflow-hidden rounded-sm bg-muted flex items-center justify-center cursor-pointer transition-all"
-            style={{border: "6px solid oklch(0.35 0.05 55)", boxShadow: "0 4px 14px oklch(0.10 0.02 50 / 0.45), inset 0 0 0 1px oklch(0.45 0.05 60 / 0.25)"}}
-            title="Edit artwork"
-          >
-            {item.image_url ? (
-              <img
-                src={item.image_url}
-                alt={item.title}
-                className="h-full w-full object-cover"
+      <section
+        className="cover-hero -mx-4 -mt-4 space-y-6 px-4 pt-4 pb-6 md:-mx-6 md:-mt-6 md:px-6 md:pt-6"
+        data-backdrop={item.image_url ? "" : undefined}
+      >
+        {item.image_url && (
+          <div
+            aria-hidden
+            className="cover-hero-backdrop"
+            style={{ backgroundImage: `url(${JSON.stringify(item.image_url)})` }}
+          />
+        )}
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)}>
+            <svg
+              className="mr-1 h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={1.5}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M15.75 19.5L8.25 12l7.5-7.5"
               />
-            ) : (
-              <span className="text-5xl text-muted-foreground">
-                {item.title[0]}
-              </span>
-            )}
-            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-              <span className="text-white text-sm font-medium">
-                Edit Artwork
-              </span>
-            </div>
-          </button>
+            </svg>
+            Back
+          </Button>
         </div>
 
-        {/* Title + badges */}
-        <div className="flex-1 space-y-4">
-          <div>
-            <h1 className="text-2xl font-bold">{item.title}</h1>
-            <div className="mt-1 flex items-center gap-2">
-              <Badge variant="outline" className="capitalize">
-                {item.media_type}
-              </Badge>
-              {item.is_favorite && (
-                <Badge variant="secondary">★ Favorite</Badge>
-              )}
-              {item.status && (
-                <Badge variant="secondary" className="capitalize">
-                  {getStatusLabel(item.status)}
-                </Badge>
-              )}
-              {item.media_type === "show" && readSeasons(item.metadata?.seasons_watched).length > 0 ? (
-                <Badge variant="outline">
-                  {readSeasons(item.metadata.seasons_watched).length}
-                  {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""} seasons watched
-                </Badge>
-              ) : item.media_type === "show" && (item.metadata?.current_season != null || seasonFields.total_seasons !== "") && (
-                <Badge variant="outline">
-                  Season {String(item.metadata.current_season ?? "?")}
-                  {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""}
-                </Badge>
-              )}
-              {item.rating && (
-                <span className="text-sm text-yellow-500">
-                  {renderStars(item.rating)}
+        <div className="flex flex-col gap-6 md:flex-row">
+          {/* Artwork */}
+          <div className="shrink-0">
+            <button
+              onClick={openArtworkDialog}
+              className="group relative h-64 w-44 overflow-hidden rounded-sm bg-muted flex items-center justify-center cursor-pointer transition-all"
+              style={{border: "6px solid oklch(0.35 0.05 55)", boxShadow: "0 4px 14px oklch(0.10 0.02 50 / 0.45), inset 0 0 0 1px oklch(0.45 0.05 60 / 0.25)"}}
+              title="Edit artwork"
+            >
+              {item.image_url ? (
+                <img
+                  src={item.image_url}
+                  alt={item.title}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-5xl text-muted-foreground">
+                  {item.title[0]}
                 </span>
               )}
-            </div>
-            {item.added_by_name && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                Added by {item.added_by_name}
-              </p>
-            )}
+              <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                <span className="text-white text-sm font-medium">
+                  Edit Artwork
+                </span>
+              </div>
+            </button>
           </div>
 
-          {/* Read-only metadata summary (visible when not editing) */}
-          {!isEditing && metaKeys.length > 0 && (
-            <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
-              {metaKeys.map((key) => (
-                <div key={key}>
-                  <dt className="text-muted-foreground">
-                    {formatKey(key)}
-                  </dt>
-                  <dd className="font-medium">
-                    {formatValue(metadata[key])}
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          )}
-
-          {metadata.source === "rawg" && <RawgCredit />}
-
-          {/* Notes (read-only) */}
-          {!isEditing && item.notes && (
-            <div className="text-sm">
-              <p className="text-muted-foreground">Notes</p>
-              <p className="mt-0.5 whitespace-pre-wrap">{item.notes}</p>
-            </div>
-          )}
-
-          {/* Tags (read-only) */}
-          {!isEditing && item.tags && item.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {item.tags.map((tag) => (
-                <Badge key={tag} variant="outline" className="text-xs">
-                  {tag}
+          {/* Title + badges */}
+          <div className="flex-1 space-y-4">
+            <div>
+              <h1 className="text-2xl font-bold">{item.title}</h1>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <Badge variant="outline" className="capitalize">
+                  {item.media_type}
                 </Badge>
-              ))}
+                {item.is_favorite && (
+                  <Badge variant="secondary">★ Favorite</Badge>
+                )}
+                {item.status && (
+                  <Badge variant="secondary" className="capitalize">
+                    {getStatusLabel(item.status)}
+                  </Badge>
+                )}
+                {item.media_type === "show" && readSeasons(item.metadata?.seasons_watched).length > 0 ? (
+                  <Badge variant="outline">
+                    {readSeasons(item.metadata.seasons_watched).length}
+                    {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""} seasons watched
+                  </Badge>
+                ) : item.media_type === "show" && (item.metadata?.current_season != null || seasonFields.total_seasons !== "") && (
+                  <Badge variant="outline">
+                    Season {String(item.metadata.current_season ?? "?")}
+                    {seasonFields.total_seasons ? ` of ${seasonFields.total_seasons}` : ""}
+                  </Badge>
+                )}
+                {item.rating && (
+                  <span className="text-sm text-yellow-500">
+                    {renderStars(item.rating)}
+                  </span>
+                )}
+              </div>
+              {item.added_by_name && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Added by {item.added_by_name}
+                </p>
+              )}
             </div>
-          )}
 
-          {/* Edit button (view mode) */}
-          {!isEditing && (
-            <div className="flex gap-2 pt-2">
-              <Button variant="outline" size="sm" onClick={enterEditMode}>
-                <svg
-                  className="mr-1.5 h-3.5 w-3.5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={1.5}
+            {/* Read-only metadata summary (visible when not editing) */}
+            {!isEditing && metaKeys.length > 0 && (
+              <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
+                {metaKeys.map((key) => (
+                  <div key={key}>
+                    <dt className="text-muted-foreground">
+                      {formatKey(key)}
+                    </dt>
+                    <dd className="font-medium">
+                      {formatValue(metadata[key])}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            {metadata.source === "rawg" && <RawgCredit />}
+
+            {/* Notes (read-only) */}
+            {!isEditing && item.notes && (
+              <div className="text-sm">
+                <p className="text-muted-foreground">Notes</p>
+                <p className="mt-0.5 whitespace-pre-wrap">{item.notes}</p>
+              </div>
+            )}
+
+            {/* Tags (read-only) */}
+            {!isEditing && item.tags && item.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {item.tags.map((tag) => (
+                  <Badge key={tag} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            )}
+
+            {/* Edit button (view mode) */}
+            {!isEditing && (
+              <div className="flex gap-2 pt-2">
+                <Button variant="outline" size="sm" onClick={enterEditMode}>
+                  <svg
+                    className="mr-1.5 h-3.5 w-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={1.5}
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                    />
+                  </svg>
+                  Edit
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => setShowDelete(true)}
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
-                  />
-                </svg>
-                Edit
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-destructive hover:text-destructive"
-                onClick={() => setShowDelete(true)}
-              >
-                Remove
-              </Button>
-            </div>
-          )}
+                  Remove
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* ─── Edit Mode ─── */}
       {isEditing && (

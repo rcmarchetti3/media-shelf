@@ -510,3 +510,42 @@
     inset 0 -1px 0 oklch(0.48 0.08 64 / 0.35),
     0 2px 8px oklch(0.10 0.02 50 / 0.35);
 }
+
+/* ─── Item page hero: the cover's colour glows behind the header ───
+   Contrast budget (checked against a pure white cover): the cover shows
+   through at ≤15% where text sits and fades to the ground by the bottom.
+   Supporting text switches to foreground at 75% (≥5.4:1 worst case),
+   since muted-foreground only clears 4.7:1 on the plain ground. */
+.cover-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.cover-hero-backdrop {
+  position: absolute;
+  inset: -48px;
+  z-index: -1;
+  background-size: cover;
+  background-position: center 35%;
+  filter: blur(48px) saturate(1.25);
+  opacity: 0.5;
+}
+
+.cover-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in oklch, var(--background) 70%, transparent) 0%,
+    color-mix(in oklch, var(--background) 80%, transparent) 45%,
+    var(--background) 100%
+  );
+}
+
+.cover-hero[data-backdrop] .text-muted-foreground {
+  color: color-mix(in oklch, var(--foreground) 75%, transparent);
+}
