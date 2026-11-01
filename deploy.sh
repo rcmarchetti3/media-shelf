@@ -6,6 +6,7 @@ REMOTE_DIR="~/docker/media-shelf"
 EXCLUDES=(
   --exclude='.git'
   --exclude='.env'
+  --exclude='.env.local'
   --exclude='node_modules'
   --exclude='__pycache__'
   --exclude='.venv'
